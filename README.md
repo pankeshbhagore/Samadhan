@@ -132,17 +132,34 @@ Visit `http://localhost:3000` in your browser.
 
 ---
 
-## 🔑 Demo Credentials
+## 🔑 Demo Credentials & Massive Scale
 
-The login page features a **Quick Login** interface that allows you to instantly switch roles and states to test the RBAC isolation. 
+The application includes a powerful bulk-seeder designed to demonstrate a true national-scale deployment.
 
-Default password for all seeded accounts is: `password123`
+**By the numbers (Seeded Data):**
+- **36** States & Union Territories
+- **10** Unique Departments (Roads, Water, Sanitation, Electricity, Traffic, Environment, Parks, Building, Health, Transport)
+- **1** Chief Minister per state
+- **10** Department Heads per state
+- **50** Dedicated Officers per state (5 for every single department)
+- **150** Complaints per state randomly distributed among citizens and officers
+- **Total:** ~2,500 active users and 5,400 complaints nationwide!
+
+### 3-Tier Dynamic Login Hierarchy
+To navigate this massive dataset, the login page features a **3-Tier Quick Login** interface. You can dynamically select:
+1. **State** (e.g., Maharashtra)
+2. **Department** (e.g., Water Board)
+3. **Officer ID** (1 through 5)
+
+Clicking the Quick Login buttons will automatically compute the correct email and log you into that exact jurisdiction.
+
+*Default password for all seeded accounts is:* `password123`
 
 You can manually login using these seeded emails:
 - **Super Admin:** `admin@samadhan.gov.in`
 - **Chief Minister (MH):** `cm@mh.samadhan.gov.in`
 - **Dept Head (Water, MH):** `dh.water@mh.samadhan.gov.in`
-- **Officer (Roads, MH):** `officer1@mh.samadhan.gov.in`
+- **Officer (Roads, MH):** `officer1.roads@mh.samadhan.gov.in`
 - **Citizen (MH):** `citizen1@mh.example.com`
 
 ---
