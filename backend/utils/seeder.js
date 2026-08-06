@@ -18,6 +18,8 @@ const departmentsTemplate = [
   { name: 'Environment & Pollution', code: 'ENV', complaintCategories: ['pollution', 'noise_complaint'], slaHours: 72 },
   { name: 'Parks & Recreation', code: 'PARKS', complaintCategories: ['park_maintenance'], slaHours: 96 },
   { name: 'Building & Construction', code: 'BUILD', complaintCategories: ['building_safety', 'encroachment'], slaHours: 24 },
+  { name: 'Public Health', code: 'HEALTH', complaintCategories: ['other'], slaHours: 24 },
+  { name: 'Public Transport', code: 'TRANSPORT', complaintCategories: ['public_transport'], slaHours: 48 }
 ];
 
 const complaintTemplates = [
@@ -31,6 +33,11 @@ const complaintTemplates = [
   { title: 'CRITICAL: Building showing structural cracks may collapse', description: 'Residential building showing large cracks in walls and pillars. Residents fear collapse. Immediate inspection needed.', category: 'building_safety', priority: 'critical', isCritical: true, criticalReason: 'building collapse' },
   { title: 'Park benches broken, playing area unsafe for children', description: 'All benches and play equipment are broken and rusted, unsafe for children.', category: 'park_maintenance', priority: 'low' },
   { title: 'Traffic signal malfunctioning causing daily jams', description: 'Signal is stuck on red for 10+ minutes causing massive traffic jams during peak hours.', category: 'traffic', priority: 'high' },
+  { title: 'Public bus route 42 highly irregular', description: 'The bus on route 42 has not been showing up on time for the past week.', category: 'public_transport', priority: 'medium' },
+  { title: 'Mosquito breeding in stagnant water', description: 'Stagnant water in empty plot is causing heavy mosquito breeding.', category: 'other', priority: 'high' },
+  { title: 'Drainage completely choked in market area', description: 'Market area is flooded due to choked drainage system.', category: 'drainage', priority: 'high' },
+  { title: 'Loud music late night from commercial venue', description: 'Loud music played till 3 AM everyday violating noise rules.', category: 'noise_complaint', priority: 'medium' },
+  { title: 'Electric pole leaning dangerously', description: 'Pole is leaning over the road, could fall anytime.', category: 'electricity', priority: 'critical', isCritical: true, criticalReason: 'pole leaning' }
 ];
 
 async function seed() {
@@ -61,37 +68,55 @@ async function seed() {
     const createdDepts = await Department.insertMany(depts);
 
     // Create State Users
-    const usersRaw = [
-      { name: `${stateObj.name} CM`, email: `cm@${sc}.samadhan.gov.in`, password, role: 'cm', designation: `Chief Minister of ${stateObj.name}`, state: stateObj.code, isActive: true },
-      { name: `Head Roads ${stateObj.code}`, email: `dh.roads@${sc}.samadhan.gov.in`, password, role: 'department_head', department: createdDepts[0]._id, designation: 'Head - Roads Dept', bandwidth: 50, state: stateObj.code, isActive: true },
-      { name: `Head Water ${stateObj.code}`, email: `dh.water@${sc}.samadhan.gov.in`, password, role: 'department_head', department: createdDepts[1]._id, designation: 'Head - Water Board', bandwidth: 50, state: stateObj.code, isActive: true },
-      { name: `Officer Roads 1 ${stateObj.code}`, email: `officer1@${sc}.samadhan.gov.in`, password, role: 'employee', department: createdDepts[0]._id, designation: 'Junior Engineer', bandwidth: 20, state: stateObj.code, isActive: true },
-      { name: `Officer Roads 2 ${stateObj.code}`, email: `officer2@${sc}.samadhan.gov.in`, password, role: 'employee', department: createdDepts[0]._id, designation: 'Assistant Engineer', bandwidth: 20, state: stateObj.code, isActive: true },
-      { name: `Officer Water 1 ${stateObj.code}`, email: `officer3@${sc}.samadhan.gov.in`, password, role: 'employee', department: createdDepts[1]._id, designation: 'Water Inspector', bandwidth: 20, state: stateObj.code, isActive: true },
-      { name: `Officer Water 2 ${stateObj.code}`, email: `officer4@${sc}.samadhan.gov.in`, password, role: 'employee', department: createdDepts[1]._id, designation: 'Plumbing Head', bandwidth: 20, state: stateObj.code, isActive: true },
-      { name: `Citizen 1 ${stateObj.code}`, email: `citizen1@${sc}.example.com`, password, role: 'citizen', ward: 'Ward 1', district: stateObj.districts[0], state: stateObj.code, isActive: true },
-      { name: `Citizen 2 ${stateObj.code}`, email: `citizen2@${sc}.example.com`, password, role: 'citizen', ward: 'Ward 2', district: stateObj.districts[1] || stateObj.districts[0], state: stateObj.code, isActive: true },
-      { name: `Citizen 3 ${stateObj.code}`, email: `citizen3@${sc}.example.com`, password, role: 'citizen', ward: 'Ward 3', district: stateObj.districts[2] || stateObj.districts[0], state: stateObj.code, isActive: true },
+    let usersRaw = [
+      { name: `${stateObj.name} CM`, email: `cm@${sc}.samadhan.gov.in`, password, role: 'cm', designation: `Chief Minister of ${stateObj.name}`, state: stateObj.code, isActive: true }
     ];
+
+    // Add Dept Heads and Officers
+    for (const [i, dept] of departmentsTemplate.entries()) {
+      const dCode = dept.code.toLowerCase();
+      // Dept Head
+      usersRaw.push({
+        name: `Head ${dept.name} ${stateObj.code}`, email: `dh.${dCode}@${sc}.samadhan.gov.in`, password, role: 'department_head', department: createdDepts[i]._id, designation: `Head - ${dept.name}`, bandwidth: 50, state: stateObj.code, isActive: true
+      });
+      // 5 Officers
+      for (let j = 1; j <= 5; j++) {
+        usersRaw.push({
+          name: `Officer ${dept.name} ${j} ${stateObj.code}`, email: `officer${j}.${dCode}@${sc}.samadhan.gov.in`, password, role: 'employee', department: createdDepts[i]._id, designation: `Officer Level ${j}`, bandwidth: 20, state: stateObj.code, isActive: true
+        });
+      }
+    }
+
+    // Add Citizens
+    for (let c = 1; c <= 10; c++) {
+      usersRaw.push({
+        name: `Citizen ${c} ${stateObj.code}`, email: `citizen${c}@${sc}.example.com`, password, role: 'citizen', ward: `Ward ${c}`, district: stateObj.districts[c % stateObj.districts.length], state: stateObj.code, isActive: true
+      });
+    }
+
     const users = await User.insertMany(usersRaw);
 
     // Link Dept Heads
-    await Department.findByIdAndUpdate(createdDepts[0]._id, { head: users[1]._id });
-    await Department.findByIdAndUpdate(createdDepts[1]._id, { head: users[2]._id });
+    const deptHeads = users.filter(u => u.role === 'department_head');
+    for (const [i, createdDept] of createdDepts.entries()) {
+      const head = deptHeads.find(h => h.department.toString() === createdDept._id.toString());
+      if (head) {
+        await Department.findByIdAndUpdate(createdDept._id, { head: head._id });
+      }
+    }
 
     const citizens = users.filter((u) => u.role === 'citizen');
     const officers = users.filter((u) => u.role === 'employee');
     const complaints = [];
 
-    // Create ~15 complaints for this state
-    for (let i = 0; i < 15; i++) {
+    // Create 150 complaints for this state
+    for (let i = 0; i < 150; i++) {
       const tmpl = complaintTemplates[i % complaintTemplates.length];
       const baseCoords = stateObj.coords;
       const coords = [baseCoords[0] + (Math.random() - 0.5) * 0.1, baseCoords[1] + (Math.random() - 0.5) * 0.1];
       const deptIndex = i % createdDepts.length;
       const citizen = citizens[i % citizens.length];
       
-      // Attempt to pick a valid officer from this department, if none fallback to undefined
       const eligibleOfficers = officers.filter(o => o.department.toString() === createdDepts[deptIndex]._id.toString());
       const officer = eligibleOfficers.length > 0 ? eligibleOfficers[i % eligibleOfficers.length] : undefined;
       
@@ -103,9 +128,9 @@ async function seed() {
         ...tmpl,
         state: stateObj.code,
         location: { type: 'Point', coordinates: coords },
-        address: `Ward ${i + 1}, ${stateObj.districts[i % stateObj.districts.length]}, ${stateObj.name}`,
+        address: `Ward ${(i % 10) + 1}, ${stateObj.districts[i % stateObj.districts.length]}, ${stateObj.name}`,
         district: stateObj.districts[i % stateObj.districts.length],
-        ward: `Ward ${i + 1}`,
+        ward: `Ward ${(i % 10) + 1}`,
         citizen: citizen._id,
         department: createdDepts[deptIndex]._id,
         status,
@@ -121,19 +146,20 @@ async function seed() {
       });
     }
 
-    for (const c of complaints) {
-      await Complaint.create(c);
+    for (let i = 0; i < complaints.length; i += 50) {
+      const batch = complaints.slice(i, i + 50);
+      await Promise.all(batch.map(c => Complaint.create(c)));
     }
-    console.log(`Seeded State: ${stateObj.name} (${stateObj.code})`);
+
+    console.log(`Seeded State: ${stateObj.name} (${stateObj.code}) with ${usersRaw.length} users and 150 complaints.`);
   }
 
   console.log('\n✅ SEED COMPLETE! Login credentials (password: password123):');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('Super Admin:  admin@samadhan.gov.in');
   console.log('CM (MH):      cm@mh.samadhan.gov.in');
-  console.log('CM (UP):      cm@up.samadhan.gov.in');
   console.log('Dept Head:    dh.roads@mh.samadhan.gov.in');
-  console.log('Officer:      officer1@mh.samadhan.gov.in');
+  console.log('Officer:      officer1.roads@mh.samadhan.gov.in');
   console.log('Citizen:      citizen1@mh.example.com');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
