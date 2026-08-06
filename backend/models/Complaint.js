@@ -103,6 +103,8 @@ const complaintSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 complaintSchema.index({ location: '2dsphere' });
+complaintSchema.index({ state: 1, department: 1, status: 1 }); // Master query index for RBAC
+complaintSchema.index({ state: 1, district: 1 }); // Map heatmap optimization
 complaintSchema.index({ status: 1, priority: 1 });
 complaintSchema.index({ citizen: 1 });
 complaintSchema.index({ assignedTo: 1 });
