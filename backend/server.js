@@ -45,6 +45,10 @@ app.use('/api/', rateLimit({ windowMs: 15 * 60 * 1000, max: 300, standardHeaders
 
 app.use((req, res, next) => { req.io = io; next(); });
 
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpecs = require('./swagger');
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 app.use('/api', routes);
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date(), mode: process.env.NODE_ENV }));
 

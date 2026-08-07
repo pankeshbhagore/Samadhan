@@ -15,6 +15,27 @@ const notificationCtrl = require('../controllers/notificationController');
 const commentCtrl = require('../controllers/commentController');
 
 // ---------- Auth ----------
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Log in a user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful
+ */
 router.post('/auth/register', registerRules, validate, authCtrl.register);
 router.post('/auth/login', loginRules, validate, authCtrl.login);
 router.get('/auth/me', protect, authCtrl.getMe);
@@ -31,7 +52,20 @@ router.get('/states', (req, res) => {
 });
 
 // ---------- Complaints ----------
+/**
+ * @swagger
+ * /api/complaints:
+ *   get:
+ *     summary: Retrieve a list of complaints based on RBAC state filtering
+ *     tags: [Complaints]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of complaints
+ */
 router.post('/complaints', protect, upload.array('images', 5), complaintRules, validate, complaintCtrl.submitComplaint);
+router.get('/complaints/export', protect, authorize('cm', 'super_admin', 'department_head'), complaintCtrl.exportComplaintsCSV);
 router.get('/complaints', protect, complaintCtrl.getComplaints);
 router.get('/complaints/nearby', protect, complaintCtrl.getNearbyComplaints);
 router.get('/complaints/stats', protect, authorize('cm', 'super_admin', 'department_head'), complaintCtrl.getDashboardStats);

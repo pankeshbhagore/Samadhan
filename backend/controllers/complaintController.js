@@ -596,3 +596,43 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
     cached: false
   });
 });
+
+// ---- Export complaints to CSV (Admin/CM only) ----
+exports.exportComplaintsCSV = asyncHandler(async (req, res) => {
+  const { status, category, department, state } = req.query;
+  const stateFilter = getStateFilter(req.user);
+  const query = { ...stateFilter };
+
+  if (req.user.role === 'super_admin' && state) {
+    query.state = state;
+  }
+  if (department && ['cm', 'super_admin'].includes(req.user.role)) query.department = department;
+  if (status) query.status = status;
+  if (category) query.category = category;
+
+  const complaints = await Complaint.find(query)
+    .populate('citizen', 'name email phone')
+    .populate('assignedTo', 'name')
+    .populate('department', 'name')
+    .sort('-createdAt');
+
+  const { Parser } = require('json2csv');
+  const fields = [
+    'ticketId', 'title', 'category', 'status', 'priority', 'isCritical', 
+    'state', 'address', 'ward', 'department.name', 'citizen.name', 'assignedTo.name',
+    'createdAt', 'resolvedAt', 'resolutionTimeHours'
+  ];
+  const opts = { fields };
+  
+  try {
+    const parser = new Parser(opts);
+    const csv = parser.parse(complaints);
+    
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=complaints_export.csv');
+    res.status(200).end(csv);
+  } catch (err) {
+    console.error('CSV Export Error:', err);
+    res.status(500).json({ success: false, message: 'Failed to generate CSV' });
+  }
+});

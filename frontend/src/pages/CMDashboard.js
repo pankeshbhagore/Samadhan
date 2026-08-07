@@ -6,7 +6,7 @@ import { formatCategory, formatStatus, DATE_RANGE_PRESETS } from '../utils/helpe
 import statesConfig, { getStateName } from '../utils/statesConfig';
 import { useAuth } from '../contexts/AuthContext';
 import { SkeletonStatsGrid } from '../components/shared/Skeletons';
-import { AlertTriangle, FileText, CheckCircle, X } from 'lucide-react';
+import { AlertTriangle, FileText, CheckCircle, X, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
@@ -43,7 +43,6 @@ export default function CMDashboard() {
 
   const [prLoading, setPrLoading] = useState(false);
   const [prReport, setPrReport] = useState(null);
-
   const handleGeneratePR = async () => {
     setPrLoading(true);
     try {
@@ -58,6 +57,38 @@ export default function CMDashboard() {
       toast.error('Error connecting to OpenAI');
     } finally {
       setPrLoading(false);
+    }
+  };
+
+  const [exportLoading, setExportLoading] = useState(false);
+  const handleExportCSV = async () => {
+    setExportLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const url = new URL(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/complaints/export`);
+      if (user?.role === 'super_admin' && selectedState) {
+        url.searchParams.append('state', selectedState);
+      }
+      
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (!response.ok) throw new Error('Export failed');
+      
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `complaints_export_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast.success('Export downloaded successfully');
+    } catch (err) {
+      toast.error('Failed to export CSV');
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -90,6 +121,9 @@ export default function CMDashboard() {
             </select>
           )}
           <div className="date-range-pills">
+          <button className="btn btn-outline btn-sm" onClick={handleExportCSV} disabled={exportLoading}>
+            {exportLoading ? 'Exporting...' : <><Download size={14} style={{ marginRight: 6 }} /> Export CSV</>}
+          </button>
           <button className="btn btn-outline btn-sm" onClick={handleGeneratePR} disabled={prLoading}>
             {prLoading ? 'Generating...' : <><FileText size={14} style={{ marginRight: 6 }} /> Auto PR Report</>}
           </button>
