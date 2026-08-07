@@ -8,11 +8,16 @@ import { Plus, Search, UserX, UserCheck, Edit2, Trash2, ShieldAlert } from 'luci
 const ROLES = ['citizen', 'employee', 'department_head', 'cm', 'super_admin'];
 const CREATE_ROLES = ['employee', 'department_head', 'cm'];
 
-const getRolesForUser = (userRole) => {
-  if (userRole === 'super_admin') return ['cm', 'department_head', 'super_admin'];
-  if (userRole === 'cm') return ['citizen', 'employee', 'department_head', 'cm'];
-  if (userRole === 'department_head') return ['employee'];
-  return [];
+const getRolesForUser = (userRole, deptFilter) => {
+  let allowed = [];
+  if (userRole === 'super_admin') allowed = ['cm', 'department_head', 'super_admin'];
+  else if (userRole === 'cm') allowed = ['citizen', 'employee', 'department_head', 'cm'];
+  else if (userRole === 'department_head') allowed = ['employee'];
+  
+  if (deptFilter) {
+    allowed = allowed.filter(r => ['employee', 'department_head'].includes(r));
+  }
+  return allowed;
 };
 
 export default function UsersPage() {
@@ -159,7 +164,7 @@ export default function UsersPage() {
           {['super_admin', 'cm'].includes(user?.role) && (
             <select className="form-control" style={{ flex: '1 1 120px' }} value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
               <option value="">All Roles</option>
-              {getRolesForUser(user?.role).map((r) => <option key={r} value={r}>{r.replace('_', ' ')}</option>)}
+              {getRolesForUser(user?.role, deptFilter).map((r) => <option key={r} value={r}>{r.replace('_', ' ')}</option>)}
             </select>
           )}
         </div>
