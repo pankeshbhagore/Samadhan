@@ -83,13 +83,13 @@ router.post('/complaints/:id/comments', protect, mongoIdParam(), commentRules, v
 
 // ---------- Users / Officers ----------
 router.get('/users/officers', protect, authorize('cm', 'super_admin', 'department_head'), userCtrl.getOfficers);
-router.get('/users/officers/:id/analysis', protect, authorize('cm', 'super_admin', 'department_head'), userCtrl.getOfficerAnalysis);
-router.get('/users/officer-performance', protect, authorize('cm', 'super_admin', 'department_head'), userCtrl.getOfficerPerformance);
-router.get('/users', protect, authorize('super_admin'), userCtrl.getAllUsers);
-router.post('/users', protect, authorize('super_admin'), userCtrl.createUser);
-router.put('/users/:id', protect, authorize('super_admin'), mongoIdParam(), validate, userCtrl.updateUser);
-router.delete('/users/:id', protect, authorize('super_admin'), mongoIdParam(), validate, userCtrl.deleteUser);
-router.put('/users/:id/toggle-active', protect, authorize('super_admin'), mongoIdParam(), validate, userCtrl.toggleUserActive);
+router.get('/users/officers/:id/analysis', protect, authorize('super_admin', 'cm', 'department_head'), userCtrl.getOfficerAnalysis);
+router.get('/users/officer-performance', protect, authorize('super_admin', 'cm', 'department_head'), userCtrl.getOfficerPerformance);
+router.get('/users', protect, authorize('super_admin', 'cm', 'department_head'), userCtrl.getAllUsers);
+router.post('/users', protect, authorize('super_admin', 'cm', 'department_head'), userCtrl.createUser);
+router.put('/users/:id', protect, authorize('super_admin', 'cm', 'department_head'), mongoIdParam(), validate, userCtrl.updateUser);
+router.delete('/users/:id', protect, authorize('super_admin', 'cm', 'department_head'), mongoIdParam(), validate, userCtrl.deleteUser);
+router.put('/users/:id/toggle-active', protect, authorize('super_admin', 'cm', 'department_head'), mongoIdParam(), validate, userCtrl.toggleUserActive);
 
 // ---------- Audit & AI Anomalies ----------
 router.get('/audit-logs', protect, authorize('cm', 'super_admin'), userCtrl.getAuditLogs);

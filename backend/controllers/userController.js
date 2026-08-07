@@ -53,10 +53,22 @@ exports.getOfficerPerformance = asyncHandler(async (req, res) => {
 
 // Full admin user list with filters
 exports.getAllUsers = asyncHandler(async (req, res) => {
-  const { role, search, state, page = 1, limit = 20 } = req.query;
+  const { role, search, state, department, page = 1, limit = 20 } = req.query;
   const query = {};
-  if (role) query.role = role;
-  if (state) query.state = state;
+  
+  if (req.user.role === 'cm') {
+    query.state = req.user.state;
+    if (department) query.department = department;
+  } else if (req.user.role === 'department_head') {
+    query.state = req.user.state;
+    query.department = req.user.department;
+    query.role = 'employee';
+  } else if (req.user.role === 'super_admin') {
+    if (state) query.state = state;
+    if (department) query.department = department;
+  }
+
+  if (role && !query.role) query.role = role;
   
   const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   if (search) query.$or = [{ name: new RegExp(escapeRegex(search), 'i') }, { email: new RegExp(escapeRegex(search), 'i') }];
@@ -77,18 +89,40 @@ exports.createUser = asyncHandler(async (req, res) => {
   const existing = await User.findOne({ email: email?.toLowerCase() });
   if (existing) throw new AppError('Email already registered', 400);
 
-  const user = await User.create({ name, email, password, phone, role, department, designation, employeeId, bandwidth, ward, district, state });
+  // RBAC for creation
+  const targetState = req.user.role === 'super_admin' ? state : req.user.state;
+  const targetDepartment = req.user.role === 'department_head' ? req.user.department : department;
+  const targetRole = req.user.role === 'department_head' ? 'employee' : role;
+
+  const user = await User.create({ name, email, password, phone, role: targetRole, department: targetDepartment, designation, employeeId, bandwidth, ward, district, state: targetState });
   res.status(201).json({ success: true, user: user.toSafeObject() });
 });
 
 exports.updateUser = asyncHandler(async (req, res) => {
-  const { email, name, phone, role, department, designation, employeeId, bandwidth, ward, district, state } = req.body;
+  const { email, name, phone, role, department, designation, employeeId, bandwidth, ward, district, state, verificationPassword, actionJustification } = req.body;
+  
+  if (!verificationPassword || !actionJustification || actionJustification.length < 10) {
+    throw new AppError('Verification password and justification (min 10 chars) are required', 400);
+  }
+  const authUser = await User.findById(req.user._id).select('+password');
+  if (!(await bcrypt.compare(verificationPassword, authUser.password))) {
+    throw new AppError('Invalid verification password', 401);
+  }
+
   const updates = { email, name, phone, role, department, designation, employeeId, bandwidth, ward, district, state };
   
   Object.keys(updates).forEach(key => updates[key] === undefined && delete updates[key]);
 
   const user = await User.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true }).select('-password');
   if (!user) throw new AppError('User not found', 404);
+  
+  await AuditLog.create({
+    action: 'USER_UPDATED',
+    entityType: 'user', entityId: user._id, performedBy: req.user._id,
+    state: user.state,
+    details: actionJustification
+  });
+  
   res.json({ success: true, user });
 });
 
@@ -112,6 +146,18 @@ exports.toggleUserActive = asyncHandler(async (req, res) => {
 });
 
 exports.deleteUser = asyncHandler(async (req, res) => {
+  const { verificationPassword, actionJustification } = req.query; // Usually in body, but this is a DELETE req, sometimes handled via URL or frontend body. To support body in DELETE:
+  const pwd = req.body.verificationPassword || verificationPassword;
+  const just = req.body.actionJustification || actionJustification;
+
+  if (!pwd || !just || just.length < 10) {
+    throw new AppError('Verification password and justification (min 10 chars) are required', 400);
+  }
+  const authUser = await User.findById(req.user._id).select('+password');
+  if (!(await bcrypt.compare(pwd, authUser.password))) {
+    throw new AppError('Invalid verification password', 401);
+  }
+
   const user = await User.findById(req.params.id);
   if (!user) throw new AppError('User not found', 404);
   if (user._id.toString() === req.user._id.toString()) throw new AppError('You cannot delete your own account', 400);
@@ -122,7 +168,8 @@ exports.deleteUser = asyncHandler(async (req, res) => {
   await AuditLog.create({
     action: 'USER_DELETED',
     entityType: 'user', entityId: user._id, performedBy: req.user._id,
-    state: user.state
+    state: user.state,
+    details: just
   });
 
   res.json({ success: true, message: 'User deleted successfully' });
@@ -150,15 +197,44 @@ exports.createDepartment = asyncHandler(async (req, res) => {
 });
 
 exports.updateDepartment = asyncHandler(async (req, res) => {
-  const { name, code, description, head, complaintCategories, contactEmail, contactPhone, mcd311DeptId, isActive, slaHours, state } = req.body;
+  const { name, code, description, head, complaintCategories, contactEmail, contactPhone, mcd311DeptId, isActive, slaHours, state, verificationPassword, actionJustification } = req.body;
+  
+  if (!verificationPassword || !actionJustification || actionJustification.length < 10) {
+    throw new AppError('Verification password and justification (min 10 chars) are required', 400);
+  }
+  const authUser = await User.findById(req.user._id).select('+password');
+  if (!(await bcrypt.compare(verificationPassword, authUser.password))) {
+    throw new AppError('Invalid verification password', 401);
+  }
+
   const updates = { name, code, description, head, complaintCategories, contactEmail, contactPhone, mcd311DeptId, isActive, slaHours, state };
   Object.keys(updates).forEach(key => updates[key] === undefined && delete updates[key]);
   const dept = await Department.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
   if (!dept) throw new AppError('Department not found', 404);
+
+  await AuditLog.create({
+    action: 'DEPARTMENT_UPDATED',
+    entityType: 'department', entityId: dept._id, performedBy: req.user._id,
+    state: dept.state,
+    details: actionJustification
+  });
+
   res.json({ success: true, department: dept });
 });
 
 exports.deleteDepartment = asyncHandler(async (req, res) => {
+  const { verificationPassword, actionJustification } = req.query; 
+  const pwd = req.body.verificationPassword || verificationPassword;
+  const just = req.body.actionJustification || actionJustification;
+
+  if (!pwd || !just || just.length < 10) {
+    throw new AppError('Verification password and justification (min 10 chars) are required', 400);
+  }
+  const authUser = await User.findById(req.user._id).select('+password');
+  if (!(await bcrypt.compare(pwd, authUser.password))) {
+    throw new AppError('Invalid verification password', 401);
+  }
+
   const dept = await Department.findById(req.params.id);
   if (!dept) throw new AppError('Department not found', 404);
 
@@ -170,6 +246,14 @@ exports.deleteDepartment = asyncHandler(async (req, res) => {
   }
 
   await Department.findByIdAndDelete(req.params.id);
+
+  await AuditLog.create({
+    action: 'DEPARTMENT_DELETED',
+    entityType: 'department', entityId: dept._id, performedBy: req.user._id,
+    state: dept.state,
+    details: just
+  });
+
   res.json({ success: true, message: 'Department deleted successfully' });
 });
 

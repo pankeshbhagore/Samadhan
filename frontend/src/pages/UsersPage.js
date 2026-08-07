@@ -2,28 +2,40 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { getAllUsers, createUser, toggleUserActive, getDepartments, deleteUser, updateUser } from '../services/api';
 import { getErrorMessage } from '../utils/helpers';
 import toast from 'react-hot-toast';
-import { Plus, Search, UserX, UserCheck, Edit2, Trash2 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { Plus, Search, UserX, UserCheck, Edit2, Trash2, ShieldAlert } from 'lucide-react';
 
 const ROLES = ['citizen', 'employee', 'department_head', 'cm', 'super_admin'];
 const CREATE_ROLES = ['employee', 'department_head', 'cm'];
 
 export default function UsersPage() {
+  const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
+  const [stateFilter, setStateFilter] = useState('');
+  const [deptFilter, setDeptFilter] = useState('');
+  
   const [showCreate, setShowCreate] = useState(false);
   const [editId, setEditId] = useState(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'employee', department: '', designation: '', bandwidth: 10, state: '' });
 
+  // Verification Challenge State
+  const [showChallenge, setShowChallenge] = useState(false);
+  const [challengeAction, setChallengeAction] = useState(null); // 'edit' or 'delete'
+  const [challengeEntity, setChallengeEntity] = useState(null);
+  const [challengeForm, setChallengeForm] = useState({ confirmName: '', password: '', justification: '' });
+  const [challengeLoading, setChallengeLoading] = useState(false);
+
   const fetchUsers = useCallback(() => {
     setLoading(true);
-    getAllUsers({ role: roleFilter || undefined, search: search || undefined, limit: 100 })
+    getAllUsers({ role: roleFilter || undefined, search: search || undefined, state: stateFilter || undefined, department: deptFilter || undefined, limit: 100 })
       .then(({ data }) => setUsers(data.users))
       .finally(() => setLoading(false));
-  }, [roleFilter, search]);
+  }, [roleFilter, search, stateFilter, deptFilter]);
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
   useEffect(() => { getDepartments().then(({ data }) => setDepartments(data.departments)); }, []);
@@ -33,7 +45,10 @@ export default function UsersPage() {
     setCreating(true);
     try {
       if (editId) {
-        await updateUser(editId, form);
+        // Edit requires challenge modal first if doing it from scratch, but since we are submitting the form:
+        // Wait, if it's an edit, we pass the challenge password and justification from the form.
+        // Actually, let's inject it.
+        await updateUser(editId, { ...form, verificationPassword: challengeForm.password, actionJustification: challengeForm.justification });
         toast.success('User updated successfully');
       } else {
         await createUser(form);
@@ -42,26 +57,53 @@ export default function UsersPage() {
       setShowCreate(false);
       setEditId(null);
       setForm({ name: '', email: '', password: '', role: 'employee', department: '', designation: '', bandwidth: 10, state: '' });
+      setChallengeForm({ confirmName: '', password: '', justification: '' });
       fetchUsers();
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to save user'));
     } finally { setCreating(false); }
   };
 
-  const openEdit = (u) => {
-    setEditId(u._id);
-    setForm({ name: u.name, email: u.email, password: '', role: u.role, department: u.department?._id || '', designation: u.designation || '', bandwidth: u.bandwidth || 10, state: u.state || '' });
-    setShowCreate(true);
+  const openChallenge = (action, entity) => {
+    setChallengeAction(action);
+    setChallengeEntity(entity);
+    setChallengeForm({ confirmName: '', password: '', justification: '' });
+    setShowChallenge(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+  const handleChallengeSubmit = async (e) => {
+    e.preventDefault();
+    if (challengeForm.confirmName !== challengeEntity.name) {
+      return toast.error('Entity name does not match');
+    }
+    if (challengeForm.justification.length < 10) {
+      return toast.error('Justification must be at least 10 characters');
+    }
+
+    setChallengeLoading(true);
     try {
-      await deleteUser(id);
-      toast.success('User deleted successfully');
-      fetchUsers();
+      if (challengeAction === 'delete') {
+        // We pass the auth to the query / body
+        await deleteUser(challengeEntity._id, { params: { verificationPassword: challengeForm.password, actionJustification: challengeForm.justification }});
+        toast.success('User deleted successfully');
+        setShowChallenge(false);
+        fetchUsers();
+      } else if (challengeAction === 'edit') {
+        // Unlock edit form
+        setShowChallenge(false);
+        setEditId(challengeEntity._id);
+        setForm({ 
+          name: challengeEntity.name, email: challengeEntity.email, password: '', 
+          role: challengeEntity.role, department: challengeEntity.department?._id || '', 
+          designation: challengeEntity.designation || '', bandwidth: challengeEntity.bandwidth || 10, 
+          state: challengeEntity.state || '' 
+        });
+        setShowCreate(true);
+      }
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Failed to delete user'));
+      toast.error(getErrorMessage(err, 'Verification failed'));
+    } finally {
+      setChallengeLoading(false);
     }
   };
 
@@ -91,10 +133,24 @@ export default function UsersPage() {
             <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input className="form-control" placeholder="Search by name or email..." style={{ paddingLeft: 32 }} value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
-          <select className="form-control" style={{ flex: '1 1 160px' }} value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
-            <option value="">All Roles</option>
-            {ROLES.map((r) => <option key={r} value={r}>{r.replace('_', ' ')}</option>)}
-          </select>
+          {user?.role === 'super_admin' && (
+            <select className="form-control" style={{ flex: '1 1 140px' }} value={stateFilter} onChange={(e) => setStateFilter(e.target.value)}>
+              <option value="">All States</option>
+              {require('../utils/statesConfig').default.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
+            </select>
+          )}
+          {['super_admin', 'cm'].includes(user?.role) && (
+            <select className="form-control" style={{ flex: '1 1 140px' }} value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)}>
+              <option value="">All Departments</option>
+              {departments.map((d) => <option key={d._id} value={d._id}>{d.name}</option>)}
+            </select>
+          )}
+          {['super_admin', 'cm'].includes(user?.role) && (
+            <select className="form-control" style={{ flex: '1 1 120px' }} value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+              <option value="">All Roles</option>
+              {ROLES.map((r) => <option key={r} value={r}>{r.replace('_', ' ')}</option>)}
+            </select>
+          )}
         </div>
       </div>
 
@@ -126,8 +182,8 @@ export default function UsersPage() {
                         <button className={`btn btn-sm btn-icon ${u.isActive ? 'btn-outline' : 'btn-success'}`} title={u.isActive ? "Deactivate" : "Reactivate"} onClick={() => handleToggle(u)}>
                           {u.isActive ? <UserX size={14} /> : <UserCheck size={14} />}
                         </button>
-                        <button className="btn btn-sm btn-icon btn-outline" title="Edit" onClick={() => openEdit(u)}><Edit2 size={14} /></button>
-                        <button className="btn btn-sm btn-icon" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }} title="Delete" onClick={() => handleDelete(u._id)}><Trash2 size={14} /></button>
+                        <button className="btn btn-sm btn-icon btn-outline" title="Edit" onClick={() => openChallenge('edit', u)}><Edit2 size={14} /></button>
+                        <button className="btn btn-sm btn-icon" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }} title="Delete" onClick={() => openChallenge('delete', u)}><Trash2 size={14} /></button>
                       </div>
                     </td>
                   </tr>
@@ -205,6 +261,42 @@ export default function UsersPage() {
               <div className="modal-footer">
                 <button type="button" className="btn btn-outline" onClick={() => setShowCreate(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={creating}>{creating ? 'Saving...' : (editId ? 'Update User' : 'Create User')}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showChallenge && (
+        <div className="modal-overlay" onClick={() => setShowChallenge(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--danger)' }}>
+                <ShieldAlert size={20} /> Secure Action Verification
+              </div>
+              <button className="btn btn-icon" onClick={() => setShowChallenge(false)}>✕</button>
+            </div>
+            <form onSubmit={handleChallengeSubmit}>
+              <div className="modal-body">
+                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: 12, borderRadius: 8, color: '#991b1b', fontSize: 13, marginBottom: 16 }}>
+                  You are attempting to <strong>{challengeAction.toUpperCase()}</strong> a government record. This action will be logged in the immutable audit trail.
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Type the exact name <strong>{challengeEntity?.name}</strong> to confirm:</label>
+                  <input className="form-control" value={challengeForm.confirmName} onChange={(e) => setChallengeForm(f => ({ ...f, confirmName: e.target.value }))} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Your Admin Password *</label>
+                  <input type="password" className="form-control" value={challengeForm.password} onChange={(e) => setChallengeForm(f => ({ ...f, password: e.target.value }))} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Justification (min 10 chars) *</label>
+                  <textarea className="form-control" rows={3} placeholder="Why is this action necessary?" value={challengeForm.justification} onChange={(e) => setChallengeForm(f => ({ ...f, justification: e.target.value }))} minLength={10} required />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-outline" onClick={() => setShowChallenge(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary" style={{ background: 'var(--danger)', borderColor: 'var(--danger)' }} disabled={challengeLoading}>{challengeLoading ? 'Verifying...' : 'Verify & Proceed'}</button>
               </div>
             </form>
           </div>
