@@ -1,108 +1,210 @@
-# Samadhan - National Public Grievance Redressal System 🏛️
+<div align="center">
+  <h1>🏛️ Samadhan</h1>
+  <p><strong>National Public Grievance Redressal & Workforce Management System</strong></p>
+</div>
 
-**Samadhan** is a comprehensive, hierarchical, and highly secure public grievance management platform designed for scale. It connects citizens directly with their respective government departments while providing powerful oversight tools for State Chief Ministers (CM) and National Super Admins.
+<br />
+
+**Samadhan** is a highly scalable, secure, and hierarchical platform designed to bridge the gap between citizens and government officials. It facilitates the end-to-end lifecycle of public grievances, from geospatial reporting to AI-assisted resolution, while providing powerful oversight tools for State Chief Ministers (CM) and National Super Admins.
+
+---
+
+## 📑 Table of Contents
+1. [Core Architecture & Technologies](#-core-architecture--technologies)
+2. [Hierarchical RBAC Architecture](#-hierarchical-rbac-architecture)
+3. [Grievance Redressal Process Flow](#-grievance-redressal-process-flow)
+4. [System Flowchart & Microservices](#-system-flowchart--microservices)
+5. [Key Features](#-key-features)
+6. [Security & Data Integrity](#-security--data-integrity)
+7. [Installation & Local Setup](#-installation--local-setup)
+
+---
+
+## 🛠 Core Architecture & Technologies
+
+Samadhan is built on a robust MERN stack, enhanced with real-time bidirectional communication and geospatial data processing.
+
+- **Frontend:** React 18, React Router DOM, Lucide Icons, Leaflet (Geospatial Mapping), Socket.io-client.
+- **Backend:** Node.js, Express.js.
+- **Database:** MongoDB & Mongoose (utilizing `2dsphere` indexes for geographic coordinate querying).
+- **Real-Time Engine:** Socket.io (for instant grievance alerts and status updates).
+- **Authentication & Security:** JWT (JSON Web Tokens), bcrypt (Password Hashing), express-rate-limit.
+
+---
+
+## 👑 Hierarchical RBAC Architecture
+
+Samadhan enforces strict data-partitioning and mutation boundaries based on 5 primary roles. The hierarchy ensures that lower-level employees only see what they need to, while higher-level admins have appropriate oversight without overwhelming their dashboards.
+
+```mermaid
+graph TD
+    SA[Super Admin<br/>National Level] -->|Manages all States| CM[State Admin / CM<br/>State Level]
+    
+    CM -->|Manages State Departments| DH1[Department Head<br/>e.g., Water Board]
+    CM -->|Manages State Departments| DH2[Department Head<br/>e.g., Electricity]
+    
+    DH1 -->|Manages Employees| E1[Employee / Officer]
+    DH1 -->|Manages Employees| E2[Employee / Officer]
+    
+    DH2 -->|Manages Employees| E3[Employee / Officer]
+    
+    C[Citizens] -.->|Submits Grievances to| DH1
+    C -.->|Submits Grievances to| DH2
+    
+    style SA fill:#1e3a8a,stroke:#fff,stroke-width:2px,color:#fff
+    style CM fill:#2563eb,stroke:#fff,stroke-width:2px,color:#fff
+    style DH1 fill:#3b82f6,stroke:#fff,stroke-width:2px,color:#fff
+    style DH2 fill:#3b82f6,stroke:#fff,stroke-width:2px,color:#fff
+    style E1 fill:#60a5fa,stroke:#fff,stroke-width:2px,color:#fff
+    style E2 fill:#60a5fa,stroke:#fff,stroke-width:2px,color:#fff
+    style E3 fill:#60a5fa,stroke:#fff,stroke-width:2px,color:#fff
+    style C fill:#10b981,stroke:#fff,stroke-width:2px,color:#fff
+```
+
+**Visibility Rules:**
+- **Department Heads** can *only* manage Employees within their specific department.
+- **State Admins (CM)** can *only* oversee Departments, Employees, and Citizens within their registered state.
+- **Super Admins** have a macro-view of the entire nation but are protected from micro-level department pollution.
+
+---
+
+## 🔄 Grievance Redressal Process Flow
+
+The lifecycle of a complaint guarantees accountability. An officer cannot simply close a ticket—the citizen must verify that the real-world issue was actually resolved.
+
+```mermaid
+sequenceDiagram
+    actor Citizen
+    participant System as Samadhan API
+    participant AI as AI Engine
+    actor Officer as Assigned Officer
+
+    Citizen->>System: Submit Grievance (Photos, GPS Location)
+    System->>AI: Analyze Sentiment & Detect Duplicates
+    AI-->>System: Return Priority & Threat Level
+    System->>Officer: Real-time Socket.io Alert 
+    
+    activate Officer
+    Officer->>System: Acknowledge & Mark "In Progress"
+    Officer->>System: Resolve Issue (Uploads Proof Photo)
+    deactivate Officer
+    
+    System->>Citizen: SMS / Notification: "Issue Resolved?"
+    
+    alt Citizen is satisfied
+        Citizen->>System: Approves Resolution
+        System->>System: Closes Ticket & Updates Audit Log
+    else Citizen is unsatisfied
+        Citizen->>System: Rejects Resolution
+        System->>Officer: Re-opens Ticket (Escalates Priority)
+    end
+```
+
+---
+
+## ⚙️ System Flowchart & Microservices
+
+The application is structured logically to separate concerns between routing, authentication, and core business logic.
+
+```mermaid
+graph LR
+    subgraph Frontend [React SPA]
+        UI[User Interface]
+        State[Auth & Theme Context]
+        Sockets[Socket Client]
+    end
+
+    subgraph Backend [Express API]
+        Router[API Gateway / Router]
+        Auth[Auth Middleware]
+        
+        subgraph Controllers
+            UC[User Controller]
+            CC[Complaint Controller]
+            AC[AI / Anomaly Controller]
+        end
+    end
+    
+    subgraph Databases [Data Layer]
+        Mongo[(MongoDB)]
+        Logs[(Audit Logs)]
+    end
+
+    UI -->|HTTP REST| Router
+    Sockets <-->|WebSockets| Router
+    Router --> Auth
+    Auth --> Controllers
+    Controllers --> Mongo
+    Controllers --> Logs
+```
+
+---
 
 ## ✨ Key Features
 
-### 🛡️ Strict Hierarchical Role-Based Access Control (RBAC)
-Data visibility and mutation privileges are strictly partitioned across 5 distinct roles:
-1. **Citizen**: Can submit grievances, track real-time status, add comments, and verify resolutions.
-2. **Employee / Officer**: Can view assigned complaints, update statuses, upload resolution proof, and manage daily tasks.
-3. **Department Head**: Can monitor their specific department's performance, assign complaints to employees, and manage their department's workforce.
-4. **State Admin (CM)**: Has oversight over their entire state. Can monitor all state departments, detect systemic bottlenecks, view public sentiment, and manage state-level officers.
-5. **Super Admin**: Has national oversight. Can manage state admins and track high-level metrics across the country.
+### 📍 Geospatial Mapping & Heatmaps
+Citizens can drop a pin on a live Leaflet map to report issues. The backend utilizes MongoDB's `$near` and `$geoWithin` operators to build live heatmaps for State Admins, helping them identify infrastructure failure clusters (e.g., flooded roads during monsoons).
 
-### 🔒 Secure Action Verification & Audit Trails
-To prevent unauthorized or accidental modifications to critical data (like editing or deleting users and departments), Samadhan enforces a **Secure Action Verification** protocol. Sensitive actions require:
-- The administrator's password to re-authenticate the action.
-- A mandatory justification string (minimum 10 characters).
-Every modification is permanently logged in the **Audit & Integrity** database.
+### 🧠 AI-Powered Insights
+The system actively monitors the database to detect operational bottlenecks. 
+- **Public Sentiment Tracking**: Aggregates complaint tone to gauge public anger/satisfaction.
+- **Officer Performance Anomalies**: Flags officers who are closing complex tickets suspiciously fast (potential fraud) or leaving critical tickets unassigned for too long.
 
-### 🧠 AI-Powered Insights & Fraud Detection
-- **Public Sentiment Analysis**: Automatically analyzes the tone of incoming complaints to alert officials of growing public unrest in specific wards.
-- **Fraud & Anomaly Detection**: Scans for duplicate tickets, bot-like behavior, and suspicious officer resolution patterns (e.g., resolving complex complaints in under 2 minutes).
-
-### 📍 Geospatial Grievance Map
-Visualize complaints on an interactive map. Citizens can pinpoint exact issues, and admins can visually identify clusters of infrastructure failures (e.g., multiple water pipe bursts in a single neighborhood).
-
-### ⚡ Real-Time Operations
-Built on Socket.io, Samadhan pushes critical alerts and new complaint notifications to relevant officers and admins instantly, eliminating the need for page refreshes.
+### 🔔 Socket.io Real-Time Event Bus
+Polling is eliminated. When a citizen submits a critical infrastructure failure (e.g., live wire down), the assigned department's officers receive a real-time toast notification instantly.
 
 ---
 
-## 🛠️ Technology Stack
+## 🔒 Security & Data Integrity
 
-**Frontend:**
-- React 18
-- React Router DOM
-- Context API (Auth, Socket, Theme)
-- Lucide React (Icons)
-- Leaflet (Maps)
-- CSS Variables for dynamic Dark/Light Mode & Glassmorphism
+Given the sensitive nature of government data, Samadhan employs strict architectural guardrails:
 
-**Backend:**
-- Node.js & Express
-- MongoDB & Mongoose (GeoJSON indexing for locations)
-- Socket.io (Real-time events)
-- JSON Web Tokens (JWT) & bcrypt (Authentication)
-- express-rate-limit & helmet (Security)
+1. **Secure Action Verification**: 
+   Standard JWT authentication is not enough for destructive actions. If an Admin attempts to Edit or Delete a user/department, the system triggers a secure challenge requiring:
+   - Re-entry of the administrator's password.
+   - A mandatory justification text (min 10 characters).
+2. **Immutable Audit Logging**: 
+   Every verified action creates an immutable record in the `AuditLog` collection, mapping the exact `req.user._id`, the `entity` modified, the geographic `state`, and the justification provided.
+3. **Strict Route Partitioning**: 
+   Backend controllers actively intercept cross-state API requests. If a Maharashtra State Admin attempts to query Gujarat's department data, the API intercepts and rejects the request natively at the controller level.
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Installation & Local Setup
 
-### Prerequisites
-- Node.js (v16 or higher)
-- MongoDB (Local instance or Atlas URI)
+### 1. Prerequisites
+- **Node.js** (v16.x or higher)
+- **MongoDB** (Local instance running on `localhost:27017` or a MongoDB Atlas URI)
 
-### Environment Variables
-Create a `.env` file in the `backend/` directory:
-```env
-PORT=5000
-NODE_ENV=development
-MONGO_URI=mongodb://localhost:27017/samadhan
-JWT_SECRET=your_super_secret_jwt_key
-JWT_EXPIRE=30d
-```
-
-### Installation
-
-**1. Clone the repository**
-```bash
-git clone https://github.com/pankeshbhagore/Samadhan.git
-cd Samadhan
-```
-
-**2. Setup Backend**
+### 2. Backend Setup
+Navigate to the backend directory, install dependencies, and configure environment variables.
 ```bash
 cd backend
 npm install
-# Optional: Seed the database with test data
-npm run seed
-# Start the backend server
+
+# Create environment configuration
+echo "PORT=5000" > .env
+echo "NODE_ENV=development" >> .env
+echo "MONGO_URI=mongodb://localhost:27017/samadhan" >> .env
+echo "JWT_SECRET=your_super_secret_jwt_key" >> .env
+echo "JWT_EXPIRE=30d" >> .env
+
+# Start the Express server
 npm run dev
 ```
 
-**3. Setup Frontend**
+### 3. Frontend Setup
+Open a new terminal, navigate to the frontend directory, install dependencies, and start the React app.
 ```bash
-cd ../frontend
+cd frontend
 npm install
+
 # Start the React development server
 npm start
 ```
-The application will be available at `http://localhost:3000`.
+The application will spin up at `http://localhost:3000`.
 
 ---
-
-## 🏗️ Architecture Overview
-
-- **`backend/controllers/`**: Contains core business logic. Notably, `userController.js` and `complaintController.js` enforce strict state-boundary and department-boundary checks.
-- **`backend/models/`**: Mongoose schemas. Features advanced configurations like GeoJSON `Point` schemas and pre-save hooks.
-- **`frontend/src/contexts/`**: Manages global state (User Auth, WebSockets, Dark/Light Themes).
-- **`frontend/src/pages/`**: Role-specific dashboards and views. Navigation is dynamically rendered based on the `user.role` via `App.js` Private Routes and `Sidebar.js`.
-
----
-
-## 🤝 Contributing
-
-When contributing to Samadhan, please ensure that all new API routes strictly adhere to the hierarchical RBAC models. Never expose cross-state or cross-department data without explicit `super_admin` or `cm` authorization middleware.
+<div align="center">
+  <i>Built to modernize and secure public grievance redressal infrastructure.</i>
+</div>
