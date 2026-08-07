@@ -35,7 +35,9 @@ jobs:
       
     - name: Run Backend Tests
       working-directory: ./backend
-      run: npm test
+      run: |
+        sleep 5
+        npm test
       env:
         MONGO_URI: mongodb://localhost:27017/samadhan_test
         REDIS_URI: redis://localhost:6379
