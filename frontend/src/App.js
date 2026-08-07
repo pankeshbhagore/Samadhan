@@ -25,6 +25,7 @@ import DepartmentsPage from './pages/DepartmentsPage';
 import DepartmentDetailPage from './pages/DepartmentDetailPage';
 import OfficerDetailPage from './pages/OfficerDetailPage';
 import SentimentPage from './pages/SentimentPage';
+import AIFraudPage from './pages/AIFraudPage';
 import MapView from './pages/MapView';
 import ProfilePage from './pages/ProfilePage';
 import UsersPage from './pages/UsersPage';
@@ -68,6 +69,7 @@ function AppRoutes() {
         <Route path="officers/:id" element={<PrivateRoute roles={['cm', 'super_admin', 'department_head']}><OfficerDetailPage /></PrivateRoute>} />
         <Route path="users" element={<PrivateRoute roles={['super_admin']}><UsersPage /></PrivateRoute>} />
         <Route path="sentiment" element={<PrivateRoute roles={['cm', 'super_admin']}><SentimentPage /></PrivateRoute>} />
+        <Route path="fraud-detection" element={<PrivateRoute roles={['cm', 'super_admin']}><AIFraudPage /></PrivateRoute>} />
         <Route path="visits" element={<PrivateRoute roles={['cm', 'super_admin']}><VisitsPage /></PrivateRoute>} />
         <Route path="audit" element={<PrivateRoute roles={['cm', 'super_admin']}><AuditPage /></PrivateRoute>} />
         <Route path="departments" element={<PrivateRoute roles={['super_admin']}><DepartmentsPage /></PrivateRoute>} />

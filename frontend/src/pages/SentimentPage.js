@@ -4,19 +4,25 @@ import { getComplaints } from '../services/api';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { BrainCircuit, AlertOctagon, TrendingDown, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import statesConfig, { getStateName } from '../utils/statesConfig';
 
 const COLORS = ['#ef4444', '#f59e0b', '#10b981']; // Angry, Neutral, Positive
 
 export default function SentimentPage() {
+  const { user } = useAuth();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filterState, setFilterState] = useState('');
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getComplaints();
+        const params = { limit: 500 };
+        if (user?.role === 'super_admin' && filterState) {
+          params.state = filterState;
+        }
+        const res = await getComplaints(params);
         setData(res.data.complaints || []);
       } catch (err) {
         console.error(err);
@@ -25,7 +31,7 @@ export default function SentimentPage() {
       }
     };
     fetchData();
-  }, []);
+  }, [filterState, user?.role]);
 
   if (loading) return <div className="page-content" style={{ padding: 32, textAlign: 'center' }}>Loading AI Sentiment Analysis...</div>;
 
@@ -61,13 +67,23 @@ export default function SentimentPage() {
 
   return (
     <div className="page-content" style={{ padding: '32px 40px' }}>
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <BrainCircuit size={32} color="var(--primary)" /> Public Sentiment Analytics
-        </h1>
-        <p style={{ color: 'var(--text-muted)', marginTop: 4 }}>
-          AI-driven analysis of citizen frustration levels and geographic hotspots.
-        </p>
+      <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <BrainCircuit size={32} color="var(--primary)" /> Public Sentiment Analytics
+          </h1>
+          <p style={{ color: 'var(--text-muted)', marginTop: 4 }}>
+            AI-driven analysis of citizen frustration levels and geographic hotspots.
+            {user?.role !== 'super_admin' && ` Showing data for ${getStateName(user?.state)}.`}
+          </p>
+        </div>
+        
+        {user?.role === 'super_admin' && (
+          <select className="form-control" style={{ width: 200 }} value={filterState} onChange={(e) => setFilterState(e.target.value)}>
+            <option value="">All India (Global View)</option>
+            {statesConfig.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
+          </select>
+        )}
       </div>
 
       <div className="grid grid-3" style={{ marginBottom: 24 }}>

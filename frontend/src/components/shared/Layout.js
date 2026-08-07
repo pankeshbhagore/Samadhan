@@ -17,6 +17,7 @@ const NAV = {
   cm: [
     { to: '/cm-dashboard', label: 'State Admin Dashboard', icon: LayoutDashboard },
     { to: '/sentiment', label: 'Public Sentiment', icon: BrainCircuit },
+    { to: '/fraud-detection', label: 'AI Fraud Detection', icon: ShieldAlert },
     { to: '/complaints', label: 'All Complaints', icon: FileText },
     { to: '/map', label: 'Grievance Map', icon: MapPin },
     { to: '/officers', label: 'Officers', icon: Users },
@@ -26,6 +27,7 @@ const NAV = {
   super_admin: [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/sentiment', label: 'Public Sentiment', icon: BrainCircuit },
+    { to: '/fraud-detection', label: 'AI Fraud Detection', icon: ShieldAlert },
     { to: '/complaints', label: 'All Complaints', icon: FileText },
     { to: '/map', label: 'Grievance Map', icon: MapPin },
     { to: '/officers', label: 'Officers', icon: Users },
@@ -172,6 +174,7 @@ export default function Layout() {
             let labelKey = link.label;
             if (link.label === 'State Admin Dashboard') labelKey = t('nav_dashboard');
             else if (link.label === 'Public Sentiment') labelKey = 'Public Sentiment';
+            else if (link.label === 'AI Fraud Detection') labelKey = 'AI Fraud Detection';
             else if (link.label === 'All Complaints') labelKey = t('nav_all');
             else if (link.label === 'Grievance Map') labelKey = t('nav_map');
             else if (link.label === 'Officers') labelKey = t('nav_officers');
