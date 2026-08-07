@@ -1,20 +1,29 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { getOfficerPerformance, getDepartments } from '../services/api';
 import { Trophy } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function OfficersPage() {
+  const { user } = useAuth();
   const [officers, setOfficers] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterDept, setFilterDept] = useState('');
+  const [filterState, setFilterState] = useState('');
   const [sortBy, setSortBy] = useState('totalResolved');
 
   useEffect(() => {
-    Promise.all([getOfficerPerformance(), getDepartments()]).then(([oRes, dRes]) => {
+    setLoading(true);
+    const params = {};
+    if (user?.role === 'super_admin' && filterState) {
+      params.state = filterState;
+    }
+    
+    Promise.all([getOfficerPerformance(params), getDepartments(params)]).then(([oRes, dRes]) => {
       setOfficers(oRes.data.officers);
       setDepartments(dRes.data.departments);
     }).finally(() => setLoading(false));
-  }, []);
+  }, [filterState, user?.role]);
 
   // Top performers leaderboard — ranked by resolved count, with a minimum
   // bar so officers with 0 resolved complaints never appear "ranked"
@@ -34,7 +43,7 @@ export default function OfficersPage() {
 
   const getCapacityColor = (pct) => (pct >= 100 ? 'var(--danger)' : pct >= 70 ? 'var(--warning)' : 'var(--success)');
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><div className="spinner" /></div>;
+  if (loading && officers.length === 0) return <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><div className="spinner" /></div>;
 
   return (
     <div>
@@ -63,6 +72,12 @@ export default function OfficersPage() {
 
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="card-body" style={{ padding: '14px 20px', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          {user?.role === 'super_admin' && (
+            <select className="form-control" style={{ flex: '1 1 180px' }} value={filterState} onChange={(e) => setFilterState(e.target.value)}>
+              <option value="">All India (Global View)</option>
+              {require('../utils/statesConfig').default.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
+            </select>
+          )}
           <select className="form-control" style={{ flex: '1 1 180px' }} value={filterDept} onChange={(e) => setFilterDept(e.target.value)}>
             <option value="">All Departments</option>
             {departments.map((d) => <option key={d._id} value={d._id}>{d.name}</option>)}

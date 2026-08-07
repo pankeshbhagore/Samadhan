@@ -3,6 +3,7 @@ import { getDepartments, createDepartment } from '../services/api';
 import { getErrorMessage } from '../utils/helpers';
 import toast from 'react-hot-toast';
 import { Plus, Building2 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const ALL_CATEGORIES = [
   'roads_potholes', 'water_supply', 'garbage_sanitation', 'sewage', 'electricity',
@@ -11,15 +12,22 @@ const ALL_CATEGORIES = [
 ];
 
 export default function DepartmentsPage() {
+  const { user } = useAuth();
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ name: '', code: '', description: '', slaHours: 72, contactEmail: '', contactPhone: '', complaintCategories: [] });
+  const [filterState, setFilterState] = useState('');
 
   useEffect(() => {
-    getDepartments().then(({ data }) => setDepartments(data.departments)).finally(() => setLoading(false));
-  }, []);
+    setLoading(true);
+    const params = {};
+    if (user?.role === 'super_admin' && filterState) {
+      params.state = filterState;
+    }
+    getDepartments(params).then(({ data }) => setDepartments(data.departments)).finally(() => setLoading(false));
+  }, [filterState, user?.role]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -45,7 +53,15 @@ export default function DepartmentsPage() {
           <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--primary)' }}>🏛️ Departments</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Manage government departments and their complaint categories</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowCreate(true)}><Plus size={16} /> Add Department</button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          {user?.role === 'super_admin' && (
+            <select className="form-control" value={filterState} onChange={(e) => setFilterState(e.target.value)}>
+              <option value="">All India (Global View)</option>
+              {require('../utils/statesConfig').default.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
+            </select>
+          )}
+          <button className="btn btn-primary" onClick={() => setShowCreate(true)}><Plus size={16} /> Add Department</button>
+        </div>
       </div>
 
       {loading ? <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><div className="spinner" /></div> : (

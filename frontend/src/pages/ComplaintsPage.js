@@ -19,6 +19,7 @@ export default function ComplaintsPage() {
     status: searchParams.get('status') || '',
     priority: searchParams.get('priority') || '',
     category: searchParams.get('category') || '',
+    state: searchParams.get('state') || '',
     search: '',
     page: 1
   });
@@ -30,13 +31,15 @@ export default function ComplaintsPage() {
     try {
       const params = { ...filters };
       Object.keys(params).forEach((k) => !params[k] && delete params[k]);
+      // Prevent standard users from passing arbitrary state filter
+      if (user?.role !== 'super_admin') delete params.state;
       const { data } = await getComplaints(params);
       setComplaints(data.complaints);
       setPagination(data.pagination);
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, user?.role]);
 
   useEffect(() => { fetchComplaints(); }, [fetchComplaints]);
 
@@ -52,6 +55,7 @@ export default function ComplaintsPage() {
     try {
       const params = { ...filters, limit: 10000, page: 1 };
       Object.keys(params).forEach((k) => !params[k] && delete params[k]);
+      if (user?.role !== 'super_admin') delete params.state;
       const { data } = await getComplaints(params);
       const allComplaints = data.complaints;
       if (allComplaints.length === 0) return toast.error('No complaints to export');
@@ -101,6 +105,12 @@ export default function ComplaintsPage() {
               <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input className="form-control" placeholder="Search complaints..." style={{ paddingLeft: 32 }} value={searchInput} onChange={(e) => handleSearchChange(e.target.value)} />
             </div>
+            {user?.role === 'super_admin' && (
+              <select className="form-control" style={{ flex: '1 1 140px' }} value={filters.state} onChange={(e) => setFilter('state', e.target.value)}>
+                <option value="">All India</option>
+                {require('../utils/statesConfig').default.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
+              </select>
+            )}
             <select className="form-control" style={{ flex: '1 1 140px' }} value={filters.status} onChange={(e) => setFilter('status', e.target.value)}>
               <option value="">All Status</option>
               {['submitted', 'under_review', 'assigned', 'in_progress', 'pending_verification', 'resolved', 'reopened', 'escalated', 'rejected'].map((s) => (

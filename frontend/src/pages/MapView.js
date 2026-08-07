@@ -61,6 +61,7 @@ export default function MapView() {
   const [loading, setLoading] = useState(true);
   const [filterPriority, setFilterPriority] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [filterState, setFilterState] = useState(''); // New State Filter
   const [nearbyCount, setNearbyCount] = useState(0);
   const [showSentiment, setShowSentiment] = useState(false);
 
@@ -76,10 +77,15 @@ export default function MapView() {
   }, [mapTheme]);
 
   useEffect(() => {
-    getComplaints({ limit: 200 }).then(({ data }) => {
+    setLoading(true);
+    const params = { limit: 200 };
+    if (user?.role === 'super_admin' && filterState) {
+      params.state = filterState;
+    }
+    getComplaints(params).then(({ data }) => {
       setComplaints(data.complaints.filter((c) => c.location?.coordinates?.length === 2));
     }).finally(() => setLoading(false));
-  }, []);
+  }, [filterState, user?.role]);
 
   const filtered = complaints.filter((c) => {
     if (filterPriority && c.priority !== filterPriority) return false;
@@ -89,13 +95,14 @@ export default function MapView() {
 
   // Initialize the map once
   useEffect(() => {
-    if (!leafletReady || loading || !mapRef.current || leafletMap.current) return;
+    if (!leafletReady || !mapRef.current || leafletMap.current) return;
     const L = window.L;
     let center = [20.5937, 78.9629]; // India center
     let zoom = 5;
     
-    if (user?.state) {
-      const stateObj = getStateByCode(user.state);
+    const relevantState = (user?.role === 'super_admin' && filterState) ? filterState : user?.state;
+    if (relevantState) {
+      const stateObj = getStateByCode(relevantState);
       if (stateObj) {
         center = stateObj.coords;
         zoom = 7;
@@ -210,6 +217,19 @@ export default function MapView() {
       <div className="card" style={{ marginBottom: 12 }}>
         <div className="card-body" style={{ padding: '12px 16px', display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', flex: '1 1 280px' }}>
+            {user?.role === 'super_admin' && (
+              <select className="form-control" style={{ flex: '1 1 140px' }} value={filterState} onChange={(e) => {
+                setFilterState(e.target.value);
+                if (leafletMap.current) {
+                  const stateObj = getStateByCode(e.target.value);
+                  if (stateObj) leafletMap.current.setView(stateObj.coords, 7);
+                  else leafletMap.current.setView([20.5937, 78.9629], 5);
+                }
+              }}>
+                <option value="">All India (Global View)</option>
+                {require('../utils/statesConfig').default.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
+              </select>
+            )}
             <select className="form-control" style={{ flex: '1 1 140px' }} value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}>
               <option value="">All Priorities</option>
               <option value="critical">🚨 Critical</option>
