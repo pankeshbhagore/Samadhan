@@ -17,7 +17,7 @@ export default function SentimentPage() {
     const fetchData = async () => {
       try {
         const res = await getComplaints();
-        setData(res.data.data);
+        setData(res.data.complaints || []);
       } catch (err) {
         console.error(err);
       } finally {
