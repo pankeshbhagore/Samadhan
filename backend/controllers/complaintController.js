@@ -417,6 +417,10 @@ exports.citizenVerify = asyncHandler(async (req, res) => {
   if (complaint.citizen.toString() !== req.user._id.toString()) throw new AppError('Not authorized', 403);
   if (complaint.status !== 'pending_verification') throw new AppError('This complaint is not awaiting verification', 400);
 
+  if (!complaint.verification) {
+    complaint.verification = {};
+  }
+
   complaint.verification.respondedAt = new Date();
   complaint.verification.citizenConfirmed = confirmed;
   complaint.verification.citizenFeedback = feedback;
