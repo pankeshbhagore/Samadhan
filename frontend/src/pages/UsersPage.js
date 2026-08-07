@@ -140,25 +140,32 @@ export default function UsersPage() {
                     </select>
                   </div>
                   <div className="form-group">
+                    <label className="form-label">State</label>
+                    <select className="form-control" value={form.state} onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}>
+                      <option value="">None (All India)</option>
+                      {require('../utils/statesConfig').default.map((s) => <option key={s.code} value={s.code}>{s.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-2">
+                  <div className="form-group">
                     <label className="form-label">Department</label>
                     <select className="form-control" value={form.department} onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}>
                       <option value="">None</option>
                       {departments.map((d) => <option key={d._id} value={d._id}>{d.name}</option>)}
                     </select>
                   </div>
-                </div>
-                <div className="grid grid-2">
                   <div className="form-group">
                     <label className="form-label">Designation</label>
                     <input className="form-control" value={form.designation} onChange={(e) => setForm((f) => ({ ...f, designation: e.target.value }))} />
                   </div>
-                  {['employee', 'department_head'].includes(form.role) && (
-                    <div className="form-group">
-                      <label className="form-label">Bandwidth (max complaints)</label>
-                      <input type="number" className="form-control" min={1} value={form.bandwidth} onChange={(e) => setForm((f) => ({ ...f, bandwidth: parseInt(e.target.value) || 1 }))} />
-                    </div>
-                  )}
                 </div>
+                {['employee', 'department_head'].includes(form.role) && (
+                  <div className="form-group">
+                    <label className="form-label">Bandwidth (max complaints)</label>
+                    <input type="number" className="form-control" min={1} value={form.bandwidth} onChange={(e) => setForm((f) => ({ ...f, bandwidth: parseInt(e.target.value) || 1 }))} />
+                  </div>
+                )}
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-outline" onClick={() => setShowCreate(false)}>Cancel</button>
