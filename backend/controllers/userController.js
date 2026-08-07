@@ -59,6 +59,11 @@ exports.getAllUsers = asyncHandler(async (req, res) => {
   if (req.user.role === 'cm') {
     query.state = req.user.state;
     if (department) query.department = department;
+    if (role) {
+      query.role = role === 'super_admin' ? { $ne: 'super_admin' } : role;
+    } else {
+      query.role = { $ne: 'super_admin' };
+    }
   } else if (req.user.role === 'department_head') {
     query.state = req.user.state;
     query.department = req.user.department;
@@ -66,10 +71,14 @@ exports.getAllUsers = asyncHandler(async (req, res) => {
   } else if (req.user.role === 'super_admin') {
     if (state) query.state = state;
     if (department) query.department = department;
-    if (!role) query.role = { $ne: 'citizen' }; // Hide citizens by default for super_admin
+    
+    const allowedRoles = ['super_admin', 'cm', 'department_head'];
+    if (role && allowedRoles.includes(role)) {
+      query.role = role;
+    } else {
+      query.role = { $in: allowedRoles };
+    }
   }
-
-  if (role && !query.role) query.role = role;
   
   const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   if (search) query.$or = [{ name: new RegExp(escapeRegex(search), 'i') }, { email: new RegExp(escapeRegex(search), 'i') }];
