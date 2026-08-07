@@ -80,7 +80,7 @@ export default function OfficersPage() {
           )}
           <select className="form-control" style={{ flex: '1 1 180px' }} value={filterDept} onChange={(e) => setFilterDept(e.target.value)}>
             <option value="">All Departments</option>
-            {departments.map((d) => <option key={d._id} value={d._id}>{d.name}</option>)}
+            {Array.from(new Map(departments.map(d => [d.name, d])).values()).map((d) => <option key={d._id} value={d._id}>{d.name}</option>)}
           </select>
           <select className="form-control" style={{ flex: '1 1 180px' }} value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
             <option value="totalResolved">Sort by: Most Resolved</option>

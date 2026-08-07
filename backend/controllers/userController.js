@@ -25,8 +25,13 @@ exports.getOfficers = asyncHandler(async (req, res) => {
 });
 
 exports.getOfficerPerformance = asyncHandler(async (req, res) => {
+  const { state } = req.query;
   const stateFilter = getStateFilter(req.user);
   const query = { role: { $in: ['employee', 'department_head'] }, isActive: true, ...stateFilter };
+
+  if (req.user.role === 'super_admin' && state) {
+    query.state = state;
+  }
 
   const officers = await User.find(query).populate('department', 'name').select('-password').sort('-stats.totalResolved');
 

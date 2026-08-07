@@ -152,7 +152,7 @@ export default function UsersPage() {
                     <label className="form-label">Department</label>
                     <select className="form-control" value={form.department} onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}>
                       <option value="">None</option>
-                      {departments.map((d) => <option key={d._id} value={d._id}>{d.name}</option>)}
+                      {departments.filter(d => !form.state || d.state === form.state).map((d) => <option key={d._id} value={d._id}>{d.name} {!form.state ? `(${d.state})` : ''}</option>)}
                     </select>
                   </div>
                   <div className="form-group">

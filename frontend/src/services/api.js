@@ -44,7 +44,7 @@ export const addComment = (id, data) => API.post(`/complaints/${id}/comments`, d
 
 // Users / Officers
 export const getOfficers = (params) => API.get('/users/officers', { params });
-export const getOfficerPerformance = () => API.get('/users/officer-performance');
+export const getOfficerPerformance = (params) => API.get('/users/officer-performance', { params });
 export const getAllUsers = (params) => API.get('/users', { params });
 export const createUser = (data) => API.post('/users', data);
 export const updateUser = (id, data) => API.put(`/users/${id}`, data);
@@ -56,7 +56,7 @@ export const getAiAnomalies = () => API.get('/ai/anomalies');
 export const generatePressRelease = () => API.get('/reports/press-release');
 
 // Departments
-export const getDepartments = () => API.get('/departments');
+export const getDepartments = (params) => API.get('/departments', { params });
 export const createDepartment = (data) => API.post('/departments', data);
 export const updateDepartment = (id, data) => API.put(`/departments/${id}`, data);
 
