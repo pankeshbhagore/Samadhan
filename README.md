@@ -21,23 +21,35 @@
 
 ## ✨ Key Features
 
-- 🌍 **True Multi-State Architecture:** Supports all 36 Indian States and UTs. Data is strictly and logically isolated using dynamic MongoDB query middleware.
-- 🔐 **Hierarchical Role-Based Access Control (RBAC):**
-  - **All-India Super Admin:** Nationwide overview; can view and filter metrics across any state.
-  - **Chief Minister (CM) / State Admin:** Exclusive dashboard restricted strictly to their state's data.
-  - **Department Head:** Analytics and tracking isolated to their specific department within their state.
-  - **Officer (Employee):** Actionable task list of grievances directly assigned to them.
-  - **Citizen:** A private portal to submit, track, and verify resolution of personal grievances.
-- 🤖 **AI-Powered Governance (OpenAI):** 
-  - Auto-classifies incoming complaints to the correct department.
-  - Sentiment analysis to flag highly frustrated citizens.
-  - Generates automated weekly state-level press releases for Chief Ministers.
-- 🎨 **Premium Glassmorphism UI:** A sleek, modern, and responsive interface featuring stunning visual depth, smooth micro-animations, and dynamic theming.
-- 📍 **Geospatial Hotspot Mapping:** Real-time interactive maps using Leaflet to visualize grievance clusters geographically.
+### 🌍 Multi-State Architecture & Hierarchical Filtering
+- Supports all 36 Indian States and UTs. Data is strictly isolated using dynamic MongoDB query middleware.
+- **Instant Hierarchical Search:** Drill down instantly from `State ➔ Department ➔ Officer` across the entire application to find exact data points.
+
+### 🔐 Role-Based Access Control (RBAC)
+- **All-India Super Admin:** Nationwide overview; can view and filter metrics across any state.
+- **Chief Minister (CM) / State Admin:** Exclusive dashboard restricted strictly to their state's data.
+- **Department Head:** Analytics and tracking isolated to their specific department within their state.
+- **Officer (Employee):** Actionable task list of grievances directly assigned to them.
+- **Citizen:** A private portal to submit, track, and verify resolution of personal grievances.
+
+### 🤖 AI-Powered Governance (OpenAI Integration)
+- **Auto-Classification:** Automatically assigns categories and priorities to incoming complaints.
+- **Sentiment & Fraud Analysis:** Flags highly frustrated citizens and detects duplicate complaints or fake images.
+- **Anomaly Detection:** Constantly monitors officer performance to flag false closures, departmental bottlenecks, and SLA breaches.
+- **Auto-Assignment:** Routes tickets to available officers based on bandwidth and historical resolution speed.
+
+### 📊 Deep Analytics & Performance Tracking
+- **Officer Analytics Dashboard:** Track individual officer workload capacity, resolution times, and AI-flagged behavioral anomalies.
+- **Department Insights:** Monitor total caseloads, SLA compliance, and cross-departmental bottlenecks.
+- **Citizen Verification:** Prevents "false closures" by forcing citizens to verify if an issue was actually fixed before it is marked as resolved.
+
+### 🎨 Premium Glassmorphism UI
+- A sleek, modern, and responsive interface featuring stunning visual depth, smooth micro-animations, and dynamic theming.
+- **Geospatial Hotspot Mapping:** Real-time interactive maps using Leaflet to visualize grievance clusters geographically.
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Architecture Flow
 
 ```mermaid
 graph TD
@@ -65,7 +77,6 @@ graph TD
 - **Styling:** Vanilla CSS (Glassmorphism, CSS Variables, Custom Animations)
 - **Data Visualization:** Recharts, Leaflet (React-Leaflet)
 - **Icons:** Lucide React
-- **Internationalization:** i18next (English & Hindi support)
 
 ### Backend
 - **Runtime:** Node.js
@@ -81,7 +92,7 @@ graph TD
 ### Prerequisites
 - Node.js (v18 or higher)
 - MongoDB (Running locally or MongoDB Atlas URI)
-- OpenAI API Key (For AI features)
+- OpenAI API Key (For AI classification and anomaly features)
 
 ### 1. Clone & Install Dependencies
 ```bash
@@ -132,6 +143,30 @@ Visit `http://localhost:3000` in your browser.
 
 ---
 
+## 📁 Project Structure
+
+```text
+Samadhan/
+├── backend/                  # Node.js + Express Backend
+│   ├── controllers/          # Business logic (complaints, users, auth, analytics)
+│   ├── middleware/           # RBAC, State filtering, Auth protection
+│   ├── models/               # Mongoose schemas (Complaint, User, Department, etc.)
+│   ├── routes/               # API endpoint definitions
+│   ├── services/             # OpenAI, Redis, Notification, Anomaly logic
+│   └── server.js             # Entry point
+└── frontend/                 # React Frontend
+    ├── public/               
+    └── src/
+        ├── components/       # Reusable UI components (Modals, Skeletons, Map)
+        ├── contexts/         # React Context (Auth)
+        ├── pages/            # Views (Dashboards, Complaints, Officers, Analytics)
+        ├── services/         # Axios API clients
+        ├── utils/            # Helpers, State configs, CSV Export
+        └── index.css         # Global Glassmorphism design system
+```
+
+---
+
 ## 🔑 Demo Credentials & Massive Scale
 
 The application includes a powerful bulk-seeder designed to demonstrate a true national-scale deployment.
@@ -166,7 +201,7 @@ You can manually login using these seeded emails:
 
 ## 🛡️ Security & Access Control
 
-Samadhan employs a strict `stateFilter.js` middleware at the Mongoose query level. This ensures that a Chief Minister querying `/api/complaints` automatically has `{ state: 'MH' }` injected into their query, completely eliminating the risk of data bleeding between jurisdictions regardless of frontend bugs.
+Samadhan employs a strict `stateFilter.js` middleware at the Mongoose query level. This ensures that a Chief Minister querying `/api/complaints` automatically has `{ state: 'MH' }` injected into their query, completely eliminating the risk of data bleeding between jurisdictions regardless of frontend bugs. Furthermore, AI anomalies and officer analytics enforce these exact same boundaries.
 
 ---
 
