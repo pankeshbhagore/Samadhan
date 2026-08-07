@@ -43,7 +43,7 @@ const PrivateRoute = ({ children, roles }) => {
 
 const RoleRouter = () => {
   const { user } = useAuth();
-  if (user?.role === 'cm') return <Navigate to="/cm-dashboard" replace />;
+  if (['cm', 'super_admin'].includes(user?.role)) return <Navigate to="/cm-dashboard" replace />;
   if (['employee', 'department_head'].includes(user?.role)) return <Navigate to="/my-complaints" replace />;
   return <Navigate to="/dashboard" replace />;
 };

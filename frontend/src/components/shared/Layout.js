@@ -25,7 +25,7 @@ const NAV = {
     { to: '/audit', label: 'Audit & Integrity', icon: ShieldAlert },
   ],
   super_admin: [
-    { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/cm-dashboard', label: 'All India Dashboard', icon: LayoutDashboard },
     { to: '/sentiment', label: 'Public Sentiment', icon: BrainCircuit },
     { to: '/fraud-detection', label: 'AI Fraud Detection', icon: ShieldAlert },
     { to: '/complaints', label: 'All Complaints', icon: FileText },

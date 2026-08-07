@@ -14,7 +14,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getComplaints({ limit: 100 })
+    getComplaints({ limit: 10000 })
       .then(({ data }) => setComplaints(data.complaints))
       .catch((err) => toast.error('Failed to load complaints'))
       .finally(() => setLoading(false));

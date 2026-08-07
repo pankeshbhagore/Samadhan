@@ -14,7 +14,7 @@ export default function EmployeeDashboard() {
   const [activeTab, setActiveTab] = useState('active');
 
   useEffect(() => {
-    getComplaints({ limit: 50 }).then(({ data }) => setMyComplaints(data.complaints)).finally(() => setLoading(false));
+    getComplaints({ limit: 10000 }).then(({ data }) => setMyComplaints(data.complaints)).finally(() => setLoading(false));
   }, []);
 
   const total = myComplaints.length;
