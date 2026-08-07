@@ -238,10 +238,21 @@ export default function CMDashboard() {
             ) : (
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
-                  <Pie data={categoryData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={10}>
+                  <Pie 
+                    data={categoryData} 
+                    cx="50%" 
+                    cy="50%" 
+                    innerRadius={60} 
+                    outerRadius={80} 
+                    dataKey="value" 
+                    paddingAngle={2}
+                    className="clickable-chart-area"
+                    onClick={(data) => navigate(`/complaints?category=${encodeURIComponent(data.name)}`)}
+                  >
                     {categoryData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
                   <Tooltip />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: 11 }} />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -257,14 +268,28 @@ export default function CMDashboard() {
           </div>
           <div className="card-body">
             <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={stats?.topDepts?.map((d) => ({ dept: d.dept?.[0]?.name?.split(' ')?.[0] || 'Unknown', total: d.total, resolved: d.resolved })) || []}>
+              <BarChart data={stats?.topDepts?.map((d) => ({ dept: d.dept?.[0]?.name?.split(' ')?.[0] || 'Unknown', deptId: d._id, total: d.total, resolved: d.resolved })) || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="dept" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="total" fill="#1a3a6b" name="Total" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="resolved" fill="#16a34a" name="Resolved" radius={[4, 4, 0, 0]} />
+                <Bar 
+                  dataKey="total" 
+                  fill="#1a3a6b" 
+                  name="Total" 
+                  radius={[4, 4, 0, 0]} 
+                  className="clickable-chart-area"
+                  onClick={(data) => navigate(data.deptId ? `/departments/${data.deptId}` : '/departments')}
+                />
+                <Bar 
+                  dataKey="resolved" 
+                  fill="#16a34a" 
+                  name="Resolved" 
+                  radius={[4, 4, 0, 0]} 
+                  className="clickable-chart-area"
+                  onClick={(data) => navigate(data.deptId ? `/departments/${data.deptId}` : '/departments')}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>

@@ -114,7 +114,17 @@ export default function OfficerDetailPage() {
             {pieData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
+                  <Pie 
+                    data={pieData} 
+                    cx="50%" 
+                    cy="50%" 
+                    innerRadius={60} 
+                    outerRadius={100} 
+                    paddingAngle={5} 
+                    dataKey="value"
+                    className="clickable-chart-area"
+                    onClick={(data) => navigate(`/complaints?status=${encodeURIComponent(data.name.toLowerCase())}&assignedTo=${encodeURIComponent(id)}`)}
+                  >
                     {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                   </Pie>
                   <Tooltip />

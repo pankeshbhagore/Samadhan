@@ -9,13 +9,14 @@ import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, FileText, MapPin, Users, Building2,
   ClipboardList, ShieldAlert, LogOut, Menu, Bell,
-  AlertTriangle, Car, User as UserIcon, Sun, Moon, Command, Globe
+  AlertTriangle, Car, User as UserIcon, Sun, Moon, Command, Globe, BrainCircuit
 } from 'lucide-react';
 import { getStateName } from '../../utils/statesConfig';
 
 const NAV = {
   cm: [
-    { to: '/cm-dashboard', label: 'CM Dashboard', icon: LayoutDashboard },
+    { to: '/cm-dashboard', label: 'State Admin Dashboard', icon: LayoutDashboard },
+    { to: '/sentiment', label: 'Public Sentiment', icon: BrainCircuit },
     { to: '/complaints', label: 'All Complaints', icon: FileText },
     { to: '/map', label: 'Grievance Map', icon: MapPin },
     { to: '/officers', label: 'Officers', icon: Users },
@@ -24,6 +25,7 @@ const NAV = {
   ],
   super_admin: [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/sentiment', label: 'Public Sentiment', icon: BrainCircuit },
     { to: '/complaints', label: 'All Complaints', icon: FileText },
     { to: '/map', label: 'Grievance Map', icon: MapPin },
     { to: '/officers', label: 'Officers', icon: Users },
@@ -168,7 +170,8 @@ export default function Layout() {
           {navItems.map((link) => {
             const Icon = link.icon;
             let labelKey = link.label;
-            if (link.label === 'CM Dashboard') labelKey = t('nav_dashboard');
+            if (link.label === 'State Admin Dashboard') labelKey = t('nav_dashboard');
+            else if (link.label === 'Public Sentiment') labelKey = 'Public Sentiment';
             else if (link.label === 'All Complaints') labelKey = t('nav_all');
             else if (link.label === 'Grievance Map') labelKey = t('nav_map');
             else if (link.label === 'Officers') labelKey = t('nav_officers');

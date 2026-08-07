@@ -69,7 +69,7 @@ async function seed() {
 
     // Create State Users
     let usersRaw = [
-      { name: `${stateObj.name} CM`, email: `cm@${sc}.samadhan.gov.in`, password, role: 'cm', designation: `Chief Minister of ${stateObj.name}`, state: stateObj.code, isActive: true }
+      { name: `${stateObj.name} CM`, email: `cm@${sc}.samadhan.gov.in`, password, role: 'cm', designation: `State Admin of ${stateObj.name}`, state: stateObj.code, isActive: true }
     ];
 
     // Add Dept Heads and Officers
