@@ -9,7 +9,7 @@ const STATUS_STYLES = {
   scheduled: { bg: '#eff6ff', color: '#1d4ed8' },
   in_progress: { bg: '#faf5ff', color: '#7e22ce' },
   completed: { bg: '#f0fdf4', color: '#16a34a' },
-  cancelled: { bg: '#f8fafc', color: '#64748b' }
+  cancelled: { bg: 'var(--card-hover)', color: '#64748b' }
 };
 
 export default function VisitsPage() {
@@ -83,7 +83,7 @@ export default function VisitsPage() {
                   </div>
 
                   {v.logs?.length > 0 && (
-                    <div style={{ marginTop: 12, padding: '10px 12px', background: '#f8fafc', borderRadius: 8 }}>
+                    <div style={{ marginTop: 12, padding: '10px 12px', background: 'var(--card-hover)', borderRadius: 8 }}>
                       <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Visit Log Summary:</div>
                       {v.logs.slice(0, 2).map((log, i) => (
                         <div key={i} style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>📍 {log.address || `Location ${i + 1}`}{log.notes && <span> — {log.notes.slice(0, 80)}</span>}</div>

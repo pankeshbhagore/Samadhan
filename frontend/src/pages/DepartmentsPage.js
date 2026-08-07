@@ -77,13 +77,13 @@ export default function DepartmentsPage() {
                 </div>
                 {d.description && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>{d.description}</p>}
                 <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-                  <div style={{ flex: 1, background: '#f8fafc', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}><div style={{ fontWeight: 700, fontSize: 16, color: 'var(--primary)' }}>{d.stats?.totalComplaints || 0}</div><div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Total</div></div>
-                  <div style={{ flex: 1, background: '#f0fdf4', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}><div style={{ fontWeight: 700, fontSize: 16, color: 'var(--success)' }}>{d.stats?.resolved || 0}</div><div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Resolved</div></div>
-                  <div style={{ flex: 1, background: '#fffbeb', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}><div style={{ fontWeight: 700, fontSize: 16, color: 'var(--warning)' }}>{d.slaHours}h</div><div style={{ fontSize: 10, color: 'var(--text-muted)' }}>SLA</div></div>
+                  <div style={{ flex: 1, background: 'var(--badge-neutral-bg)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}><div style={{ fontWeight: 700, fontSize: 16, color: 'var(--info)' }}>{d.stats?.totalComplaints || 0}</div><div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Total</div></div>
+                  <div style={{ flex: 1, background: 'var(--badge-low-bg)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}><div style={{ fontWeight: 700, fontSize: 16, color: 'var(--success)' }}>{d.stats?.resolved || 0}</div><div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Resolved</div></div>
+                  <div style={{ flex: 1, background: 'var(--badge-medium-bg)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}><div style={{ fontWeight: 700, fontSize: 16, color: 'var(--warning)' }}>{d.slaHours}h</div><div style={{ fontSize: 10, color: 'var(--text-muted)' }}>SLA</div></div>
                 </div>
                 {d.complaintCategories?.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                    {d.complaintCategories.map((c) => <span key={c} style={{ background: '#eff6ff', color: 'var(--primary)', padding: '2px 6px', borderRadius: 4, fontSize: 10 }}>{c.replace('_', ' ')}</span>)}
+                    {d.complaintCategories.map((c) => <span key={c} style={{ background: 'var(--badge-assigned-bg)', color: 'var(--badge-assigned-fg)', border: '1px solid var(--badge-assigned-border)', padding: '2px 6px', borderRadius: 4, fontSize: 10 }}>{c.replace('_', ' ')}</span>)}
                   </div>
                 )}
                 {d.head && <div style={{ marginTop: 10, fontSize: 12, color: 'var(--text-muted)' }}>👤 Head: {d.head?.name}</div>}

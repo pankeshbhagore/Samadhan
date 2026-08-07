@@ -35,7 +35,7 @@ export default function AuditPage() {
       </div>
 
       <div className="grid grid-3" style={{ marginBottom: 24 }}>
-        <div className="stat-card"><div className="stat-icon" style={{ background: '#f8fafc' }}>📝</div><div><div className="stat-value" style={{ color: 'var(--primary)' }}>{total}</div><div className="stat-label">Total Audit Events</div></div></div>
+        <div className="stat-card"><div className="stat-icon" style={{ background: 'var(--card-hover)' }}>📝</div><div><div className="stat-value" style={{ color: 'var(--primary)' }}>{total}</div><div className="stat-label">Total Audit Events</div></div></div>
         <div className="stat-card" style={{ cursor: 'pointer', border: suspiciousCount > 0 ? '2px solid #fecaca' : undefined }} onClick={() => setShowSuspicious(true)}>
           <div className="stat-icon" style={{ background: '#fef2f2' }}>⚠️</div>
           <div><div className="stat-value" style={{ color: 'var(--danger)' }}>{suspiciousCount}</div><div className="stat-label">Suspicious Actions</div>{suspiciousCount > 0 && <div style={{ fontSize: 10, color: 'var(--danger)' }}>Click to filter</div>}</div>
