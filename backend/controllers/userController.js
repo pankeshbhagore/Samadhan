@@ -114,9 +114,24 @@ exports.updateUser = asyncHandler(async (req, res) => {
   
   Object.keys(updates).forEach(key => updates[key] === undefined && delete updates[key]);
 
+  const targetUser = await User.findById(req.params.id);
+  if (!targetUser) throw new AppError('User not found', 404);
+
+  // Hierarchical scope checks for update
+  if (req.user.role === 'department_head') {
+    if (targetUser.department?.toString() !== req.user.department?.toString() || targetUser.role !== 'employee') {
+      throw new AppError('Department Heads can only edit employees within their own department', 403);
+    }
+  } else if (req.user.role === 'cm') {
+    if (targetUser.state !== req.user.state || targetUser.role === 'super_admin') {
+      throw new AppError('State Admins can only edit users within their own state and cannot edit super admins', 403);
+    }
+  } else if (req.user.role === 'super_admin') {
+     // super_admin can do anything, except maybe we prevent them from modifying another super_admin?
+     // For now, let super_admin manage all.
+  }
+
   const user = await User.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true }).select('-password');
-  if (!user) throw new AppError('User not found', 404);
-  
   await AuditLog.create({
     action: 'USER_UPDATED',
     entityType: 'user', entityId: user._id, performedBy: req.user._id,
@@ -133,6 +148,17 @@ exports.toggleUserActive = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
   if (!user) throw new AppError('User not found', 404);
   if (user._id.toString() === req.user._id.toString()) throw new AppError('You cannot deactivate your own account', 400);
+
+  // Hierarchical scope checks
+  if (req.user.role === 'department_head') {
+    if (user.department?.toString() !== req.user.department?.toString() || user.role !== 'employee') {
+      throw new AppError('Department Heads can only deactivate employees within their own department', 403);
+    }
+  } else if (req.user.role === 'cm') {
+    if (user.state !== req.user.state || user.role === 'super_admin') {
+      throw new AppError('State Admins can only deactivate users within their own state', 403);
+    }
+  }
 
   user.isActive = !user.isActive;
   await user.save({ validateBeforeSave: false });
@@ -162,6 +188,17 @@ exports.deleteUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
   if (!user) throw new AppError('User not found', 404);
   if (user._id.toString() === req.user._id.toString()) throw new AppError('You cannot delete your own account', 400);
+
+  // Hierarchical scope checks for delete
+  if (req.user.role === 'department_head') {
+    if (user.department?.toString() !== req.user.department?.toString() || user.role !== 'employee') {
+      throw new AppError('Department Heads can only delete employees within their own department', 403);
+    }
+  } else if (req.user.role === 'cm') {
+    if (user.state !== req.user.state || user.role === 'super_admin') {
+      throw new AppError('State Admins can only delete users within their own state', 403);
+    }
+  }
 
   // Instead of hard delete, we could soft delete, but user requested full CRUD delete
   await User.findByIdAndDelete(req.params.id);
@@ -210,8 +247,16 @@ exports.updateDepartment = asyncHandler(async (req, res) => {
 
   const updates = { name, code, description, head, complaintCategories, contactEmail, contactPhone, mcd311DeptId, isActive, slaHours, state };
   Object.keys(updates).forEach(key => updates[key] === undefined && delete updates[key]);
+  
+  const targetDept = await Department.findById(req.params.id);
+  if (!targetDept) throw new AppError('Department not found', 404);
+
+  // Hierarchical scope checks for dept update
+  if (req.user.role === 'cm' && targetDept.state !== req.user.state) {
+    throw new AppError('State Admins can only edit departments within their own state', 403);
+  }
+
   const dept = await Department.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
-  if (!dept) throw new AppError('Department not found', 404);
 
   await AuditLog.create({
     action: 'DEPARTMENT_UPDATED',
@@ -238,6 +283,11 @@ exports.deleteDepartment = asyncHandler(async (req, res) => {
 
   const dept = await Department.findById(req.params.id);
   if (!dept) throw new AppError('Department not found', 404);
+
+  // Hierarchical scope checks for dept delete
+  if (req.user.role === 'cm' && dept.state !== req.user.state) {
+    throw new AppError('State Admins can only delete departments within their own state', 403);
+  }
 
   // Check if department has active complaints
   const Complaint = require('../models/Complaint');
