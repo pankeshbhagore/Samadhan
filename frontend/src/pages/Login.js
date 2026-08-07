@@ -10,6 +10,7 @@ export default function Login() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
+  const [demoRole, setDemoRole] = useState(''); // new hierarchical state
   const [demoState, setDemoState] = useState('mh'); // default to MH
   const [demoDept, setDemoDept] = useState('roads'); // default to Roads
   const [demoOfficerId, setDemoOfficerId] = useState('1'); // default to Officer 1
@@ -57,30 +58,38 @@ export default function Login() {
           <div style={{ marginTop: 24, padding: '16px', background: 'var(--card-hover)', borderRadius: 10, border: '1px solid var(--border)' }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Demo Quick Login (Password: password123)</div>
             
-            <button type="button" onClick={() => quickLogin('admin@samadhan.gov.in')}
-              style={{ width: '100%', padding: '8px', fontSize: 13, background: 'var(--primary-dark)', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, marginBottom: 12 }}>
-              🌍 Login as All-India Super Admin
-            </button>
-            
-            <div style={{ borderTop: '1px solid var(--border)', margin: '12px 0' }}></div>
-            
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>1. Select State:</label>
-              <select className="form-control" value={demoState} onChange={(e) => setDemoState(e.target.value)} style={{ padding: '6px 10px', fontSize: 13, marginBottom: 8, width: '100%' }}>
-                {statesConfig.map(s => <option key={s.code} value={s.code.toLowerCase()}>{s.name}</option>)}
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>1. Select Role:</label>
+              <select className="form-control" value={demoRole} onChange={(e) => setDemoRole(e.target.value)} style={{ padding: '6px 10px', fontSize: 13, width: '100%' }}>
+                <option value="">-- Choose a Role --</option>
+                <option value="superadmin">🌍 All-India Super Admin</option>
+                <option value="stateadmin">👑 State Admin</option>
+                <option value="citizen">👤 Citizen</option>
+                <option value="depthead">🏢 Department Head</option>
+                <option value="officer">👮 Field Officer</option>
               </select>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <button type="button" onClick={() => quickLogin(`cm@${demoState}.samadhan.gov.in`)} className="btn btn-outline btn-sm">👑 State Admin</button>
-                <button type="button" onClick={() => quickLogin(`citizen1@${demoState}.example.com`)} className="btn btn-outline btn-sm">👤 Citizen</button>
-              </div>
             </div>
 
-            <div style={{ borderTop: '1px dashed var(--border)', margin: '16px 0' }}></div>
+            {demoRole === 'superadmin' && (
+              <button type="button" onClick={() => quickLogin('admin@samadhan.gov.in')}
+                style={{ width: '100%', padding: '8px', fontSize: 13, background: 'var(--primary-dark)', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>
+                Login as Super Admin
+              </button>
+            )}
 
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>2. Select Department & Officer:</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 8, marginBottom: 8 }}>
-                <select className="form-control" value={demoDept} onChange={(e) => setDemoDept(e.target.value)} style={{ padding: '6px 10px', fontSize: 13 }}>
+            {['stateadmin', 'citizen', 'depthead', 'officer'].includes(demoRole) && (
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>2. Select State:</label>
+                <select className="form-control" value={demoState} onChange={(e) => setDemoState(e.target.value)} style={{ padding: '6px 10px', fontSize: 13, width: '100%' }}>
+                  {statesConfig.map(s => <option key={s.code} value={s.code.toLowerCase()}>{s.name}</option>)}
+                </select>
+              </div>
+            )}
+
+            {['depthead', 'officer'].includes(demoRole) && (
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>3. Select Department:</label>
+                <select className="form-control" value={demoDept} onChange={(e) => setDemoDept(e.target.value)} style={{ padding: '6px 10px', fontSize: 13, width: '100%' }}>
                   <option value="roads">Roads & Infra</option>
                   <option value="water">Water Board</option>
                   <option value="sanit">Sanitation</option>
@@ -92,7 +101,13 @@ export default function Login() {
                   <option value="health">Health</option>
                   <option value="transport">Transport</option>
                 </select>
-                <select className="form-control" value={demoOfficerId} onChange={(e) => setDemoOfficerId(e.target.value)} style={{ padding: '6px 10px', fontSize: 13 }}>
+              </div>
+            )}
+
+            {demoRole === 'officer' && (
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>4. Select Officer ID:</label>
+                <select className="form-control" value={demoOfficerId} onChange={(e) => setDemoOfficerId(e.target.value)} style={{ padding: '6px 10px', fontSize: 13, width: '100%' }}>
                   <option value="1">ID: #1</option>
                   <option value="2">ID: #2</option>
                   <option value="3">ID: #3</option>
@@ -100,11 +115,24 @@ export default function Login() {
                   <option value="5">ID: #5</option>
                 </select>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <button type="button" onClick={() => quickLogin(`dh.${demoDept}@${demoState}.samadhan.gov.in`)} className="btn btn-outline btn-sm">🏢 Dept Head</button>
-                <button type="button" onClick={() => quickLogin(`officer${demoOfficerId}.${demoDept}@${demoState}.samadhan.gov.in`)} className="btn btn-outline btn-sm">👮 Officer</button>
-              </div>
-            </div>
+            )}
+
+            {demoRole === 'stateadmin' && (
+              <button type="button" onClick={() => quickLogin(`cm@${demoState}.samadhan.gov.in`)} className="btn btn-outline" style={{ width: '100%', fontSize: 13 }}>👑 Login as State Admin</button>
+            )}
+            
+            {demoRole === 'citizen' && (
+              <button type="button" onClick={() => quickLogin(`citizen1@${demoState}.example.com`)} className="btn btn-outline" style={{ width: '100%', fontSize: 13 }}>👤 Login as Citizen</button>
+            )}
+
+            {demoRole === 'depthead' && (
+              <button type="button" onClick={() => quickLogin(`dh.${demoDept}@${demoState}.samadhan.gov.in`)} className="btn btn-outline" style={{ width: '100%', fontSize: 13 }}>🏢 Login as Dept Head</button>
+            )}
+
+            {demoRole === 'officer' && (
+              <button type="button" onClick={() => quickLogin(`officer${demoOfficerId}.${demoDept}@${demoState}.samadhan.gov.in`)} className="btn btn-outline" style={{ width: '100%', fontSize: 13 }}>👮 Login as Officer</button>
+            )}
+
           </div>
 
           <div style={{ textAlign: 'center', marginTop: 16, fontSize: 13 }}>
