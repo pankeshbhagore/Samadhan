@@ -41,6 +41,8 @@ router.post('/auth/login', loginRules, validate, authCtrl.login);
 router.get('/auth/me', protect, authCtrl.getMe);
 router.put('/auth/profile', protect, authCtrl.updateProfile);
 router.put('/auth/change-password', protect, changePasswordRules, validate, authCtrl.changePassword);
+router.post('/auth/forgot-password', authCtrl.forgotPassword);
+router.put('/auth/reset-password/:token', authCtrl.resetPassword);
 
 // ---------- Public tracking (no auth) ----------
 router.get('/track/:ticketId', complaintCtrl.trackPublic);

@@ -50,6 +50,8 @@ const userSchema = new mongoose.Schema({
   },
 
   passwordChangedAt: Date,
+  resetPasswordToken: String,
+  resetPasswordExpire: Date,
   lastLogin: Date,
   fcmToken: String
 }, { timestamps: true });
@@ -75,6 +77,14 @@ userSchema.methods.changedPasswordAfter = function (jwtTimestamp) {
     return parseInt(this.passwordChangedAt.getTime() / 1000, 10) > jwtTimestamp;
   }
   return false;
+};
+
+userSchema.methods.getResetPasswordToken = function () {
+  const crypto = require('crypto');
+  const resetToken = crypto.randomBytes(20).toString('hex');
+  this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  this.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+  return resetToken;
 };
 
 userSchema.methods.addRating = async function (rating) {
@@ -105,6 +115,8 @@ userSchema.methods.addResolutionTime = async function (hours, category) {
 userSchema.methods.toSafeObject = function () {
   const obj = this.toObject();
   delete obj.password;
+  delete obj.resetPasswordToken;
+  delete obj.resetPasswordExpire;
   return obj;
 };
 

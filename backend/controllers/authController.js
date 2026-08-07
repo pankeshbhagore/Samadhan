@@ -60,3 +60,43 @@ exports.changePassword = asyncHandler(async (req, res) => {
   await user.save();
   sendToken(user, 200, res);
 });
+
+const crypto = require('crypto');
+
+exports.forgotPassword = asyncHandler(async (req, res) => {
+  const user = await User.findOne({ email: req.body.email.toLowerCase() });
+  if (!user) throw new AppError('There is no user with that email address', 404);
+
+  const resetToken = user.getResetPasswordToken();
+  await user.save({ validateBeforeSave: false });
+
+  // In a real application, send this token via Email.
+  // For now, we simulate success and return it in dev environments or print it to console.
+  const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
+  console.log(`[Email Simulation] Password reset requested for ${user.email}. Link: ${resetUrl}`);
+
+  res.status(200).json({
+    success: true,
+    message: 'Password reset token sent to email',
+    // In production, NEVER send the token in the response. We include it here just for easy demo/testing.
+    ...(process.env.NODE_ENV !== 'production' && { resetToken, resetUrl })
+  });
+});
+
+exports.resetPassword = asyncHandler(async (req, res) => {
+  const resetPasswordToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+
+  const user = await User.findOne({
+    resetPasswordToken,
+    resetPasswordExpire: { $gt: Date.now() }
+  });
+
+  if (!user) throw new AppError('Invalid or expired password reset token', 400);
+
+  user.password = req.body.password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpire = undefined;
+  await user.save();
+
+  sendToken(user, 200, res);
+});
