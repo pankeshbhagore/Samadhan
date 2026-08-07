@@ -9,11 +9,13 @@ const auditLogSchema = new mongoose.Schema({
   ipAddress: String,
   userAgent: String,
   suspicious: { type: Boolean, default: false },
-  suspicionReason: String
+  suspicionReason: String,
+  state: String
 }, { timestamps: true });
 
 auditLogSchema.index({ suspicious: 1, createdAt: -1 });
 auditLogSchema.index({ entityId: 1 });
 auditLogSchema.index({ performedBy: 1 });
+auditLogSchema.index({ state: 1 });
 
 module.exports = mongoose.model('AuditLog', auditLogSchema);

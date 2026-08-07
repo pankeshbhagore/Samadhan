@@ -13,11 +13,14 @@ const { detectOfficerAnomaly } = require('./aiClassification');
  * Scan all active officers for behavioral anomalies.
  * Returns an array of { officer, anomalies } objects.
  */
-async function scanOfficerAnomalies() {
-  const officers = await User.find({
+async function scanOfficerAnomalies(stateFilter) {
+  const query = {
     role: { $in: ['employee', 'department_head'] },
     isActive: true,
-  }).select('-password').lean();
+  };
+  if (stateFilter) query.state = stateFilter;
+
+  const officers = await User.find(query).select('-password').lean();
 
   const results = [];
   for (const officer of officers) {
@@ -39,7 +42,7 @@ async function runPredictiveMaintenance(io) {
   
   const hotspots = await Complaint.aggregate([
     { $match: { createdAt: { $gte: sevenDaysAgo }, ward: { $exists: true, $ne: '' } } },
-    { $group: { _id: { ward: '$ward', category: '$category' }, count: { $sum: 1 }, complaints: { $push: '$_id' } } },
+    { $group: { _id: { ward: '$ward', category: '$category', state: '$state' }, count: { $sum: 1 }, complaints: { $push: '$_id' } } },
     { $match: { count: { $gte: 5 } } } // Threshold for predictive maintenance
   ]);
 
@@ -53,7 +56,8 @@ async function runPredictiveMaintenance(io) {
         entityType: 'department', // general
         suspicious: true, // using suspicious flag to bubble up in UI
         suspicionReason: `Predictive Maintenance: ${spot.count} ${spot._id.category} complaints in ${spot._id.ward} recently. Infrastructure review required.`,
-        details: { alertId, ward: spot._id.ward, category: spot._id.category, count: spot.count }
+        details: { alertId, ward: spot._id.ward, category: spot._id.category, count: spot.count },
+        state: spot._id.state
       });
 
       if (io) {
@@ -99,11 +103,20 @@ async function detectSpamComplaints(citizenId, hours = 24) {
 }
 
 /**
- * Identify department bottlenecks — departments with high pending/overdue ratios.
+ * Scan for departments that are accumulating too many "pending_verification"
+ * or "assigned" complaints compared to their historical average.
  */
-async function detectDepartmentBottlenecks() {
+async function detectDepartmentBottlenecks(stateFilter) {
+  const query = {};
+  if (stateFilter) query.state = stateFilter;
+
+  const departmentIds = (await Department.find(query).select('_id').lean()).map(d => d._id);
+
   const bottlenecks = await Complaint.aggregate([
-    { $match: { status: { $nin: ['resolved', 'rejected'] } } },
+    { $match: { 
+      status: { $nin: ['resolved', 'rejected'] },
+      department: { $in: departmentIds }
+    }},
     { $group: {
       _id: '$department',
       pending: { $sum: 1 },

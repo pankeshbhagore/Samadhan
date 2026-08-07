@@ -31,7 +31,7 @@ export default function CMDashboard() {
     Promise.all([
       getDashboardStats(params),
       getComplaints({ priority: 'critical', status: 'submitted,under_review,assigned,in_progress', limit: 5, ...(user?.role === 'super_admin' && selectedState ? { state: selectedState } : {}) }),
-      getAiAnomalies()
+      getAiAnomalies(params)
     ]).then(([statsRes, critRes, anomalyRes]) => {
       setStats(statsRes.data.stats);
       setCriticalComplaints(critRes.data.complaints);

@@ -318,7 +318,7 @@ exports.assignComplaint = asyncHandler(async (req, res) => {
     complaintId: complaint._id
   });
 
-  await AuditLog.create({ action: 'ASSIGN', entityType: 'complaint', entityId: complaint._id, performedBy: req.user._id, details: { officerId } });
+  await AuditLog.create({ action: 'ASSIGN', entityType: 'complaint', entityId: complaint._id, performedBy: req.user._id, details: { officerId }, state: complaint.state });
 
   res.json({ success: true, complaint });
 });
@@ -388,7 +388,8 @@ exports.updateStatus = asyncHandler(async (req, res) => {
           performedBy: req.user._id,
           suspicious: true,
           suspicionReason: `Officer resolved complaint from ${Math.round(distanceMeters)}m away.`,
-          details: { distanceMeters, officerLat: latitude, officerLng: longitude }
+          details: { distanceMeters, officerLat: latitude, officerLng: longitude },
+          state: complaint.state
         });
         
         req.io?.emit('false_closure_alert', {
@@ -412,7 +413,8 @@ exports.updateStatus = asyncHandler(async (req, res) => {
       await AuditLog.create({
         action: 'SUSPICIOUS_CLOSURE', entityType: 'complaint', entityId: complaint._id,
         performedBy: req.user._id, suspicious: true,
-        suspicionReason: 'Sent for verification without any proof images'
+        suspicionReason: 'Sent for verification without any proof images',
+        state: complaint.state
       });
     }
   } else {

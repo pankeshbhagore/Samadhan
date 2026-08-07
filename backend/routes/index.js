@@ -95,9 +95,10 @@ router.get('/audit-logs', protect, authorize('cm', 'super_admin'), userCtrl.getA
 
 router.get('/ai/anomalies', protect, authorize('cm', 'super_admin'), async (req, res) => {
   const { scanOfficerAnomalies, detectDepartmentBottlenecks } = require('../services/anomalyDetection');
+  const stateFilter = req.user.role === 'cm' ? req.user.state : (req.query.state || null);
   const [officerAnomalies, departmentBottlenecks] = await Promise.all([
-    scanOfficerAnomalies(),
-    detectDepartmentBottlenecks(),
+    scanOfficerAnomalies(stateFilter),
+    detectDepartmentBottlenecks(stateFilter),
   ]);
   res.json({ success: true, officerAnomalies, departmentBottlenecks });
 });

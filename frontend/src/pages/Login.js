@@ -64,9 +64,9 @@ export default function Login() {
                 <option value="">-- Choose a Role --</option>
                 <option value="superadmin">🌍 All-India Super Admin</option>
                 <option value="stateadmin">👑 State Admin</option>
-                <option value="citizen">👤 Citizen</option>
                 <option value="depthead">🏢 Department Head</option>
                 <option value="officer">👮 Field Officer</option>
+                <option value="citizen">👤 Citizen</option>
               </select>
             </div>
 

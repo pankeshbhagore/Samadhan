@@ -20,10 +20,13 @@ async function processImageForFraud(filePath, complaintId, officerId, io) {
     const hash = image.hash();
 
     // Look for previous hashes in the last 1000 complaints to prevent duplicate uploads
-    const recentComplaints = await Complaint.find({
-      'verification.proofImageHashes': { $exists: true, $not: { $size: 0 } },
-      _id: { $ne: complaintId }
-    }).select('ticketId verification.proofImageHashes').sort('-createdAt').limit(1000).lean();
+    const [recentComplaints, currentComplaint] = await Promise.all([
+      Complaint.find({
+        'verification.proofImageHashes': { $exists: true, $not: { $size: 0 } },
+        _id: { $ne: complaintId }
+      }).select('ticketId verification.proofImageHashes').sort('-createdAt').limit(1000).lean(),
+      Complaint.findById(complaintId).select('state')
+    ]);
 
     for (const comp of recentComplaints) {
       for (const existingHash of comp.verification?.proofImageHashes || []) {
@@ -37,7 +40,9 @@ async function processImageForFraud(filePath, complaintId, officerId, io) {
             entityType: 'complaint',
             entityId: complaintId,
             performedBy: officerId,
+            details: { reason: 'Duplicate proof image detected across complaints' },
             suspicious: true,
+            state: currentComplaint?.state,
             suspicionReason: `Image Fraud: Upload visually matches an image from older ticket ${comp.ticketId} (dist=${dist})`
           });
 

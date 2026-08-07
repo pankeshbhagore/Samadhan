@@ -104,7 +104,8 @@ exports.toggleUserActive = asyncHandler(async (req, res) => {
 
   await AuditLog.create({
     action: user.isActive ? 'USER_REACTIVATED' : 'USER_DEACTIVATED',
-    entityType: 'user', entityId: user._id, performedBy: req.user._id
+    entityType: 'user', entityId: user._id, performedBy: req.user._id,
+    state: user.state
   });
 
   res.json({ success: true, user: user.toSafeObject() });
@@ -142,7 +143,8 @@ exports.updateDepartment = asyncHandler(async (req, res) => {
 
 exports.getAuditLogs = asyncHandler(async (req, res) => {
   const { suspicious, page = 1, limit = 50 } = req.query;
-  const query = {};
+  const { getStateFilter } = require('../middleware/stateFilter');
+  const query = { ...getStateFilter(req.user) };
   if (suspicious === 'true') query.suspicious = true;
 
   const pageNum = Math.max(1, parseInt(page));
