@@ -106,6 +106,15 @@ export default function DepartmentsPage() {
                   <div className="form-group"><label className="form-label">Contact Email</label><input type="email" className="form-control" value={form.contactEmail} onChange={(e) => setForm((f) => ({ ...f, contactEmail: e.target.value }))} /></div>
                   <div className="form-group"><label className="form-label">SLA (hours)</label><input type="number" className="form-control" value={form.slaHours} onChange={(e) => setForm((f) => ({ ...f, slaHours: parseInt(e.target.value) || 1 }))} min={1} /></div>
                 </div>
+                {user?.role === 'super_admin' && (
+                  <div className="form-group">
+                    <label className="form-label">State *</label>
+                    <select className="form-control" value={form.state || ''} onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))} required>
+                      <option value="">Select State</option>
+                      {require('../utils/statesConfig').default.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
+                    </select>
+                  </div>
+                )}
                 <div className="form-group">
                   <label className="form-label">Complaint Categories</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>

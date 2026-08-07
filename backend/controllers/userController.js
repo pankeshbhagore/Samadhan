@@ -123,7 +123,10 @@ exports.getDepartments = asyncHandler(async (req, res) => {
 
 exports.createDepartment = asyncHandler(async (req, res) => {
   const { name, code, description, head, complaintCategories, contactEmail, contactPhone, mcd311DeptId, slaHours, state } = req.body;
-  const dept = await Department.create({ name, code, description, head, complaintCategories, contactEmail, contactPhone, mcd311DeptId, slaHours, state });
+  const deptState = (req.user.role !== 'super_admin' && req.user.state) ? req.user.state : state;
+  if (!deptState) throw new AppError('State is required to create a department', 400);
+  
+  const dept = await Department.create({ name, code, description, head, complaintCategories, contactEmail, contactPhone, mcd311DeptId, slaHours, state: deptState });
   res.status(201).json({ success: true, department: dept });
 });
 
