@@ -45,7 +45,11 @@ export default function UsersPage() {
   }, [roleFilter, search, stateFilter, deptFilter]);
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
-  useEffect(() => { getDepartments().then(({ data }) => setDepartments(data.departments)); }, []);
+  
+  useEffect(() => { 
+    getDepartments(stateFilter ? { state: stateFilter } : undefined)
+      .then(({ data }) => setDepartments(data.departments)); 
+  }, [stateFilter]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -146,7 +150,7 @@ export default function UsersPage() {
               {require('../utils/statesConfig').default.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
             </select>
           )}
-          {['super_admin', 'cm'].includes(user?.role) && (
+          {['super_admin', 'cm'].includes(user?.role) && !['super_admin', 'cm', 'citizen'].includes(roleFilter) && (
             <select className="form-control" style={{ flex: '1 1 140px' }} value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)}>
               <option value="">All Departments</option>
               {departments.map((d) => <option key={d._id} value={d._id}>{d.name}</option>)}
