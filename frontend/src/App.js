@@ -67,13 +67,13 @@ function AppRoutes() {
         <Route path="map" element={<PrivateRoute><MapView /></PrivateRoute>} />
         <Route path="officers" element={<PrivateRoute roles={['cm', 'super_admin', 'department_head']}><OfficersPage /></PrivateRoute>} />
         <Route path="officers/:id" element={<PrivateRoute roles={['cm', 'super_admin', 'department_head']}><OfficerDetailPage /></PrivateRoute>} />
-        <Route path="users" element={<PrivateRoute roles={['super_admin']}><UsersPage /></PrivateRoute>} />
+        <Route path="users" element={<PrivateRoute roles={['super_admin', 'cm', 'department_head']}><UsersPage /></PrivateRoute>} />
         <Route path="sentiment" element={<PrivateRoute roles={['cm', 'super_admin']}><SentimentPage /></PrivateRoute>} />
         <Route path="fraud-detection" element={<PrivateRoute roles={['cm', 'super_admin']}><AIFraudPage /></PrivateRoute>} />
         <Route path="visits" element={<PrivateRoute roles={['cm', 'super_admin']}><VisitsPage /></PrivateRoute>} />
         <Route path="audit" element={<PrivateRoute roles={['cm', 'super_admin']}><AuditPage /></PrivateRoute>} />
-        <Route path="departments" element={<PrivateRoute roles={['super_admin']}><DepartmentsPage /></PrivateRoute>} />
-        <Route path="departments/:id" element={<PrivateRoute roles={['super_admin']}><DepartmentDetailPage /></PrivateRoute>} />
+        <Route path="departments" element={<PrivateRoute roles={['super_admin', 'cm']}><DepartmentsPage /></PrivateRoute>} />
+        <Route path="departments/:id" element={<PrivateRoute roles={['super_admin', 'cm']}><DepartmentDetailPage /></PrivateRoute>} />
         <Route path="profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
       </Route>
       <Route path="*" element={<NotFound />} />

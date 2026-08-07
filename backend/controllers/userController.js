@@ -66,6 +66,7 @@ exports.getAllUsers = asyncHandler(async (req, res) => {
   } else if (req.user.role === 'super_admin') {
     if (state) query.state = state;
     if (department) query.department = department;
+    if (!role) query.role = { $ne: 'citizen' }; // Hide citizens by default for super_admin
   }
 
   if (role && !query.role) query.role = role;

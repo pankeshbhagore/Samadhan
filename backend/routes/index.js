@@ -113,9 +113,9 @@ router.post('/webhook/whatsapp', require('../controllers/whatsappController').ha
 // ---------- Departments ----------
 router.get('/departments', protect, userCtrl.getDepartments);
 router.get('/departments/:id/analysis', protect, userCtrl.getDepartmentAnalysis);
-router.post('/departments', protect, authorize('super_admin'), userCtrl.createDepartment);
-router.put('/departments/:id', protect, authorize('super_admin'), mongoIdParam(), validate, userCtrl.updateDepartment);
-router.delete('/departments/:id', protect, authorize('super_admin'), mongoIdParam(), validate, userCtrl.deleteDepartment);
+router.post('/departments', protect, authorize('super_admin', 'cm'), userCtrl.createDepartment);
+router.put('/departments/:id', protect, authorize('super_admin', 'cm'), mongoIdParam(), validate, userCtrl.updateDepartment);
+router.delete('/departments/:id', protect, authorize('super_admin', 'cm'), mongoIdParam(), validate, userCtrl.deleteDepartment);
 
 // ---------- CM Visits ----------
 router.post('/visits', protect, authorize('cm', 'super_admin'), visitCtrl.createVisit);

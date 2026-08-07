@@ -21,8 +21,10 @@ const NAV = {
     { to: '/complaints', label: 'All Complaints', icon: FileText },
     { to: '/map', label: 'Grievance Map', icon: MapPin },
     { to: '/officers', label: 'Officers', icon: Users },
+    { to: '/departments', label: 'Departments', icon: Building2 },
     { to: '/visits', label: 'Visit Logs', icon: Car },
     { to: '/audit', label: 'Audit & Integrity', icon: ShieldAlert },
+    { to: '/users', label: 'User Management', icon: UserIcon },
   ],
   super_admin: [
     { to: '/cm-dashboard', label: 'All India Dashboard', icon: LayoutDashboard },
@@ -41,6 +43,7 @@ const NAV = {
     { to: '/complaints', label: 'All Complaints', icon: FileText },
     { to: '/officers', label: 'Officers', icon: Users },
     { to: '/map', label: 'Grievance Map', icon: MapPin },
+    { to: '/users', label: 'User Management', icon: UserIcon },
   ],
   employee: [
     { to: '/my-complaints', label: 'My Tasks', icon: ClipboardList },
@@ -178,6 +181,8 @@ export default function Layout() {
             else if (link.label === 'All Complaints') labelKey = t('nav_all');
             else if (link.label === 'Grievance Map') labelKey = t('nav_map');
             else if (link.label === 'Officers') labelKey = t('nav_officers');
+            else if (link.label === 'Departments') labelKey = 'Departments';
+            else if (link.label === 'User Management') labelKey = 'User Management';
             else if (link.label === 'Visit Logs') labelKey = t('nav_visits');
             else if (link.label === 'Audit & Integrity') labelKey = t('nav_audit');
             else if (link.label === 'My Profile') labelKey = t('nav_profile');
