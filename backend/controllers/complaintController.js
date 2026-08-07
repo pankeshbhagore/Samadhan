@@ -185,14 +185,20 @@ exports.getComplaints = asyncHandler(async (req, res) => {
   // except for explicit overrides like admin filtering by department.
   if (department && ['cm', 'super_admin'].includes(req.user.role)) query.department = department;
   if (ward) query.ward = ward;
-  if (search) query.$text = { $search: search };
+  if (search) {
+    if (search.trim().toUpperCase().startsWith('GRV-')) {
+      query.ticketId = { $regex: search.trim(), $options: 'i' };
+    } else {
+      query.$text = { $search: search };
+    }
+  }
 
   if (sentiment) query['aiAnalysis.sentiment'] = sentiment;
   if (hasDuplicates === 'true') query.duplicateCount = { $gt: 0 };
   if (isCritical === 'true') query.isCritical = true;
 
   const pageNum = Math.max(1, parseInt(page));
-  const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+  const limitNum = Math.min(10000, Math.max(1, parseInt(limit)));
 
   const [total, complaints] = await Promise.all([
     Complaint.countDocuments(query),
