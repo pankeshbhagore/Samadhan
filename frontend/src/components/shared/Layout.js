@@ -231,14 +231,14 @@ export default function Layout() {
             </div>
           )}
 
-          <button className="theme-toggle" onClick={toggleTheme} title={isDark ? 'Switch to light mode' : 'Switch to dark mode'} aria-label="Toggle theme">
+          <button className="btn btn-icon" style={{ background: 'var(--card-hover)', border: '1px solid var(--border)' }} onClick={toggleTheme} title={isDark ? 'Switch to light mode' : 'Switch to dark mode'} aria-label="Toggle theme">
             {isDark ? <Sun size={17} /> : <Moon size={17} />}
           </button>
 
           <NotificationBell />
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--card-hover)', padding: '6px 14px', borderRadius: 8, border: '1px solid var(--border)', cursor: 'pointer' }}
-            onClick={() => navigate('/profile')} id="profile-chip">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--card-hover)', padding: '6px 14px', borderRadius: 12, border: '1px solid var(--border)', cursor: 'pointer', transition: 'all 0.2s ease' }}
+            onClick={() => navigate('/profile')} id="profile-chip" className="hover-bg">
             <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 12, fontWeight: 700 }}>
               {user?.name?.charAt(0)}
             </div>
