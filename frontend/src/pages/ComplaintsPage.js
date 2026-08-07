@@ -27,6 +27,7 @@ export default function ComplaintsPage() {
     department: '',
     assignedTo: '',
     search: '',
+    limit: 5,
     page: 1
   });
   
@@ -226,7 +227,21 @@ export default function ComplaintsPage() {
 
         {pagination.pages > 1 && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderTop: '1px solid var(--border)' }}>
-            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Page {pagination.page} of {pagination.pages} ({pagination.total} total)</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Page {pagination.page} of {pagination.pages} ({pagination.total} total)</span>
+              <select 
+                className="form-control" 
+                style={{ width: 'auto', padding: '4px 8px', fontSize: 13, height: 30 }}
+                value={filters.limit || 5} 
+                onChange={(e) => setFilters(f => ({ ...f, limit: e.target.value, page: 1 }))}
+              >
+                <option value="5">5 per page</option>
+                <option value="10">10 per page</option>
+                <option value="20">20 per page</option>
+                <option value="50">50 per page</option>
+                <option value="100">100 per page</option>
+              </select>
+            </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="btn btn-outline btn-sm" disabled={pagination.page <= 1} onClick={() => setFilter('page', pagination.page - 1)}><ChevronLeft size={14} /> Prev</button>
               <button className="btn btn-outline btn-sm" disabled={pagination.page >= pagination.pages} onClick={() => setFilter('page', pagination.page + 1)}>Next <ChevronRight size={14} /></button>
