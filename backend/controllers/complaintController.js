@@ -186,10 +186,11 @@ exports.getComplaints = asyncHandler(async (req, res) => {
   if (department && ['cm', 'super_admin'].includes(req.user.role)) query.department = department;
   if (ward) query.ward = ward;
   if (search) {
-    if (search.trim().toUpperCase().startsWith('GRV-')) {
-      query.ticketId = { $regex: search.trim(), $options: 'i' };
+    const searchVal = search.trim();
+    if (searchVal.toUpperCase().startsWith('GRV') || /^\d+$/.test(searchVal) || /^[A-Z]{2}-\d{4}/i.test(searchVal)) {
+      query.ticketId = { $regex: searchVal, $options: 'i' };
     } else {
-      query.$text = { $search: search };
+      query.$text = { $search: searchVal };
     }
   }
 
