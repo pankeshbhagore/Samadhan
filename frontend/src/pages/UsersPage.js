@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { Plus, Search, UserX, UserCheck } from 'lucide-react';
 
 const ROLES = ['citizen', 'employee', 'department_head', 'cm', 'super_admin'];
+const CREATE_ROLES = ['employee', 'department_head', 'cm'];
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
@@ -136,7 +137,7 @@ export default function UsersPage() {
                   <div className="form-group">
                     <label className="form-label">Role *</label>
                     <select className="form-control" value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}>
-                      {ROLES.map((r) => <option key={r} value={r}>{r.replace('_', ' ')}</option>)}
+                      {CREATE_ROLES.map((r) => <option key={r} value={r}>{r === 'cm' ? 'State Admin' : r.replace('_', ' ')}</option>)}
                     </select>
                   </div>
                   <div className="form-group">
@@ -148,19 +149,23 @@ export default function UsersPage() {
                   </div>
                 </div>
                 <div className="grid grid-2">
-                  <div className="form-group">
-                    <label className="form-label">Department</label>
-                    <select className="form-control" value={form.department} onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}>
-                      <option value="">None</option>
-                      {departments.filter(d => !form.state || d.state === form.state).map((d) => <option key={d._id} value={d._id}>{d.name} {!form.state ? `(${d.state})` : ''}</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Designation</label>
-                    <input className="form-control" value={form.designation} onChange={(e) => setForm((f) => ({ ...f, designation: e.target.value }))} />
-                  </div>
+                  {['employee', 'department_head'].includes(form.role) && (
+                    <div className="form-group">
+                      <label className="form-label">Department</label>
+                      <select className="form-control" value={form.department} onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}>
+                        <option value="">None</option>
+                        {departments.filter(d => !form.state || d.state === form.state).map((d) => <option key={d._id} value={d._id}>{d.name} {!form.state ? `(${d.state})` : ''}</option>)}
+                      </select>
+                    </div>
+                  )}
+                  {form.role === 'employee' && (
+                    <div className="form-group">
+                      <label className="form-label">Designation</label>
+                      <input className="form-control" value={form.designation} onChange={(e) => setForm((f) => ({ ...f, designation: e.target.value }))} />
+                    </div>
+                  )}
                 </div>
-                {['employee', 'department_head'].includes(form.role) && (
+                {form.role === 'employee' && (
                   <div className="form-group">
                     <label className="form-label">Bandwidth (max complaints)</label>
                     <input type="number" className="form-control" min={1} value={form.bandwidth} onChange={(e) => setForm((f) => ({ ...f, bandwidth: parseInt(e.target.value) || 1 }))} />

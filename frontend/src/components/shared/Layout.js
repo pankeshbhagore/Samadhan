@@ -29,10 +29,10 @@ const NAV = {
     { to: '/complaints', label: 'All Complaints', icon: FileText },
     { to: '/map', label: 'Grievance Map', icon: MapPin },
     { to: '/officers', label: 'Officers', icon: Users },
-    { to: '/users', label: 'User Management', icon: UserIcon },
     { to: '/departments', label: 'Departments', icon: Building2 },
     { to: '/visits', label: 'Visit Logs', icon: Car },
     { to: '/audit', label: 'Audit & Integrity', icon: ShieldAlert },
+    { to: '/users', label: 'User Management', icon: UserIcon },
   ],
   department_head: [
     { to: '/my-complaints', label: 'My Dashboard', icon: LayoutDashboard },
