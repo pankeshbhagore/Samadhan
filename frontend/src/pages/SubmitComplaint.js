@@ -99,7 +99,7 @@ export default function SubmitComplaint() {
           <AlertTriangle size={18} />
           <div>
             <strong>⚠️ Critical situation detected!</strong>
-            <div style={{ fontSize: 12, marginTop: 2 }}>This complaint will be flagged as CRITICAL and escalated immediately to the CM and department head.</div>
+            <div style={{ fontSize: 12, marginTop: 2 }}>This complaint will be flagged as CRITICAL and escalated immediately to the State Admin and department head.</div>
           </div>
         </div>
       )}

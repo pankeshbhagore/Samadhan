@@ -70,7 +70,7 @@ export default function Login() {
                 {statesConfig.map(s => <option key={s.code} value={s.code.toLowerCase()}>{s.name}</option>)}
               </select>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <button type="button" onClick={() => quickLogin(`cm@${demoState}.samadhan.gov.in`)} className="btn btn-outline btn-sm">👑 Chief Minister</button>
+                <button type="button" onClick={() => quickLogin(`cm@${demoState}.samadhan.gov.in`)} className="btn btn-outline btn-sm">👑 State Admin</button>
                 <button type="button" onClick={() => quickLogin(`citizen1@${demoState}.example.com`)} className="btn btn-outline btn-sm">👤 Citizen</button>
               </div>
             </div>

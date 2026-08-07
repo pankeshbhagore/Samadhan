@@ -42,7 +42,7 @@ export default function VisitsPage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--primary)' }}>🚗 CM Visit Logs</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--primary)' }}>🚗 State Admin Visit Logs</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Track field visits, nearby complaints, and follow-up actions</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowCreate(true)}><Plus size={16} /> Plan Visit</button>

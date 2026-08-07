@@ -107,7 +107,7 @@ export default function CMDashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em' }}>
-            {user?.role === 'super_admin' ? 'All India Admin Dashboard' : 'CM Grievance Dashboard'}
+            {user?.role === 'super_admin' ? 'All India Admin Dashboard' : 'State Admin Grievance Dashboard'}
           </h1>
           <p style={{ color: 'var(--text-muted)', marginTop: 4 }}>
             {user?.role === 'super_admin' && !selectedState ? 'All India' : getStateName(user?.role === 'super_admin' ? selectedState : user?.state)} Grievance Intelligence System • {format(new Date(), 'EEEE, d MMMM yyyy')}

@@ -55,7 +55,7 @@ exports.generatePressRelease = asyncHandler(async (req, res) => {
   }));
 
   const prompt = `
-    You are an expert Public Relations officer for the Chief Minister's Office. 
+    You are an expert Public Relations officer for the State Admin's Office. 
     Write a professional, positive, and inspiring weekly press release summarizing the government's 
     efforts in resolving citizen grievances over the last 7 days.
 
@@ -71,7 +71,7 @@ exports.generatePressRelease = asyncHandler(async (req, res) => {
     const response = await aiClient.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
-      { role: 'system', content: `You are an expert PR writer for the Chief Minister of ${stateName}.` },
+      { role: 'system', content: `You are an expert PR writer for the State Admin of ${stateName}.` },
       { role: 'user', content: prompt }
     ],
       temperature: 0.7,
