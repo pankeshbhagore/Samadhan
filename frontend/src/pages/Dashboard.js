@@ -34,10 +34,19 @@ export default function Dashboard() {
         <button className="btn btn-primary" onClick={() => navigate('/complaints/new')}><Plus size={16} /> New Complaint</button>
       </div>
 
-      {needsVerification.map((c) => (
+      {needsVerification.length > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600 }}>Action Required ({needsVerification.length})</h2>
+          {needsVerification.length > 5 && (
+            <button className="btn btn-outline btn-sm" onClick={() => navigate('/complaints?status=pending_verification')}>View All Pending</button>
+          )}
+        </div>
+      )}
+
+      {needsVerification.slice(0, 5).map((c) => (
         <div key={c._id} className="alert alert-warning" style={{ marginBottom: 12, cursor: 'pointer' }} onClick={() => navigate(`/complaints/${c._id}`)}>
           <CheckCircle size={16} />
-          <div style={{ flex: 1 }}><strong>Action Required: Verify Resolution</strong><div style={{ fontSize: 12 }}>{c.title} — Please confirm if your issue is resolved</div></div>
+          <div style={{ flex: 1 }}><strong>Verify Resolution</strong><div style={{ fontSize: 12 }}>{c.title} — Please confirm if your issue is resolved</div></div>
           <button className="btn btn-sm btn-success">Verify Now →</button>
         </div>
       ))}
