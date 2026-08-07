@@ -109,6 +109,7 @@ router.post('/webhook/whatsapp', require('../controllers/whatsappController').ha
 
 // ---------- Departments ----------
 router.get('/departments', protect, userCtrl.getDepartments);
+router.get('/departments/:id/analysis', protect, userCtrl.getDepartmentAnalysis);
 router.post('/departments', protect, authorize('super_admin'), userCtrl.createDepartment);
 router.put('/departments/:id', protect, authorize('super_admin'), mongoIdParam(), validate, userCtrl.updateDepartment);
 

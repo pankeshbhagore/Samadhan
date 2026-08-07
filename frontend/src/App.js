@@ -22,6 +22,7 @@ import OfficersPage from './pages/OfficersPage';
 import VisitsPage from './pages/VisitsPage';
 import AuditPage from './pages/AuditPage';
 import DepartmentsPage from './pages/DepartmentsPage';
+import DepartmentDetailPage from './pages/DepartmentDetailPage';
 import MapView from './pages/MapView';
 import ProfilePage from './pages/ProfilePage';
 import UsersPage from './pages/UsersPage';
@@ -66,6 +67,7 @@ function AppRoutes() {
         <Route path="visits" element={<PrivateRoute roles={['cm', 'super_admin']}><VisitsPage /></PrivateRoute>} />
         <Route path="audit" element={<PrivateRoute roles={['cm', 'super_admin']}><AuditPage /></PrivateRoute>} />
         <Route path="departments" element={<PrivateRoute roles={['super_admin']}><DepartmentsPage /></PrivateRoute>} />
+        <Route path="departments/:id" element={<PrivateRoute roles={['super_admin']}><DepartmentDetailPage /></PrivateRoute>} />
         <Route path="profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
       </Route>
       <Route path="*" element={<NotFound />} />

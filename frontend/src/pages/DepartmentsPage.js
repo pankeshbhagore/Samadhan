@@ -4,6 +4,7 @@ import { getErrorMessage } from '../utils/helpers';
 import toast from 'react-hot-toast';
 import { Plus, Building2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const ALL_CATEGORIES = [
   'roads_potholes', 'water_supply', 'garbage_sanitation', 'sewage', 'electricity',
@@ -13,6 +14,7 @@ const ALL_CATEGORIES = [
 
 export default function DepartmentsPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -67,7 +69,7 @@ export default function DepartmentsPage() {
       {loading ? <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><div className="spinner" /></div> : (
         <div className="grid grid-3">
           {departments.map((d) => (
-            <div key={d._id} className="card">
+            <div key={d._id} className="card card-clickable" onClick={() => navigate(`/departments/${d._id}`)}>
               <div className="card-body">
                 <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
                   <div style={{ width: 44, height: 44, borderRadius: 10, background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Building2 size={22} color="white" /></div>

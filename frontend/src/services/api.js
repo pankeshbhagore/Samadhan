@@ -57,6 +57,7 @@ export const generatePressRelease = () => API.get('/reports/press-release');
 
 // Departments
 export const getDepartments = (params) => API.get('/departments', { params });
+export const getDepartmentAnalysis = (id) => API.get(`/departments/${id}/analysis`);
 export const createDepartment = (data) => API.post('/departments', data);
 export const updateDepartment = (id, data) => API.put(`/departments/${id}`, data);
 

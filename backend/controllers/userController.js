@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Department = require('../models/Department');
 const AuditLog = require('../models/AuditLog');
+const Complaint = require('../models/Complaint');
 const { AppError, asyncHandler } = require('../middleware/errorHandler');
 const { getStateFilter } = require('../middleware/stateFilter');
 
@@ -154,3 +155,59 @@ exports.getAuditLogs = asyncHandler(async (req, res) => {
 
   res.json({ success: true, logs, total });
 });
+
+exports.getDepartmentAnalysis = asyncHandler(async (req, res) => {
+  const departmentId = req.params.id;
+  const dept = await Department.findById(departmentId).populate('head', 'name email phone');
+  if (!dept) throw new AppError('Department not found', 404);
+
+  // Enforce state boundaries
+  if (req.user.role !== 'super_admin' && req.user.state && dept.state !== req.user.state) {
+    throw new AppError('Not authorized to access this department', 403);
+  }
+
+  // Get all officers in this department
+  const officers = await User.find({ department: departmentId, role: { $in: ['employee', 'department_head'] } })
+    .select('-password')
+    .sort('-stats.totalResolved');
+
+  const officersData = officers.map((o) => ({
+    id: o._id,
+    name: o.name,
+    role: o.role,
+    designation: o.designation,
+    stats: o.stats,
+    activeComplaints: o.activeComplaints,
+    bandwidth: o.bandwidth,
+    capacityPercent: o.bandwidth > 0 ? Math.round((o.activeComplaints / o.bandwidth) * 100) : 0,
+    falseClosureRate: o.stats.totalAssigned > 0 ? ((o.stats.falseClosures / o.stats.totalAssigned) * 100).toFixed(1) : '0'
+  }));
+
+  // Get complaint aggregates
+  const complaints = await Complaint.aggregate([
+    { $match: { department: dept._id } },
+    { $group: {
+        _id: '$status',
+        count: { $sum: 1 },
+        avgResolutionTime: { $avg: '$resolutionTimeHours' },
+        criticalCount: { $sum: { $cond: ['$isCritical', 1, 0] } },
+        slaBreaches: { $sum: { $cond: [{ $gt: ['$resolutionTimeHours', dept.slaHours] }, 1, 0] } }
+      }
+    }
+  ]);
+
+  const recentComplaints = await Complaint.find({ department: dept._id })
+    .sort('-createdAt')
+    .limit(10)
+    .populate('citizen', 'name')
+    .populate('assignedTo', 'name');
+
+  res.json({
+    success: true,
+    department: dept,
+    officers: officersData,
+    complaintStats: complaints,
+    recentComplaints
+  });
+});
+
