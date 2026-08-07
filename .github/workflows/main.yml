@@ -39,7 +39,7 @@ jobs:
         sleep 5
         npm test
       env:
-        MONGO_URI: mongodb://localhost:27017/samadhan_test
-        REDIS_URI: redis://localhost:6379
+        MONGO_URI: mongodb://127.0.0.1:27017/samadhan_test
+        REDIS_URI: redis://127.0.0.1:6379
         JWT_SECRET: test_secret_key
         NODE_ENV: test
