@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { getComplaints } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 import { ShieldAlert, Fingerprint, MapPin, Database, Activity } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import statesConfig, { getStateName } from '../utils/statesConfig';
 
 export default function AIFraudPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,15 +60,15 @@ export default function AIFraudPage() {
       </div>
 
       <div className="grid grid-3" style={{ marginBottom: 24 }}>
-        <div className="stat-card" style={{ borderColor: 'var(--danger)', background: 'rgba(239,68,68,0.05)' }}>
+        <div className="stat-card" style={{ borderColor: 'var(--danger)', background: 'rgba(239,68,68,0.05)', cursor: 'pointer' }} onClick={() => navigate('/complaints?hasDuplicates=true')}>
           <div className="stat-icon" style={{ background: 'var(--danger)', color: 'white' }}><Database size={24} /></div>
           <div><div className="stat-value" style={{ color: 'var(--danger)' }}>{totalDuplicates}</div><div className="stat-label">Total Duplicate Attempts</div></div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/complaints?hasDuplicates=true')}>
           <div className="stat-icon" style={{ background: 'var(--warning)', color: 'white' }}><Fingerprint size={24} /></div>
           <div><div className="stat-value">{potentialSpam}</div><div className="stat-label">Coordinated Spam Attacks</div></div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/complaints')}>
           <div className="stat-icon" style={{ background: 'var(--primary)', color: 'white' }}><Activity size={24} /></div>
           <div><div className="stat-value">{highConfidenceAI}</div><div className="stat-label">High Confidence AI Predictions</div></div>
         </div>
@@ -80,7 +82,7 @@ export default function AIFraudPage() {
           ) : (
             <div style={{ display: 'grid', gap: 16 }}>
               {duplicates.slice(0, 10).map((d) => (
-                <div key={d._id} style={{ display: 'flex', gap: 16, padding: 16, background: 'var(--card-hover)', borderRadius: 12, border: '1px solid var(--border)' }}>
+                <div key={d._id} style={{ display: 'flex', gap: 16, padding: 16, background: 'var(--card-hover)', borderRadius: 12, border: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => navigate(`/complaints/${d._id}`)}>
                   <div style={{ background: 'var(--danger)', color: 'white', width: 40, height: 40, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <MapPin size={20} />
                   </div>

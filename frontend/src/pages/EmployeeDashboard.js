@@ -34,10 +34,10 @@ export default function EmployeeDashboard() {
       </div>
 
       <div className="grid grid-4" style={{ marginBottom: 24 }}>
-        <div className="stat-card"><div className="stat-icon" style={{ background: '#eff6ff' }}><List size={22} color="var(--primary)" /></div><div><div className="stat-value" style={{ color: 'var(--primary)' }}>{total}</div><div className="stat-label">Total Assigned</div></div></div>
-        <div className="stat-card"><div className="stat-icon" style={{ background: '#fff7ed' }}><Clock size={22} color="var(--warning)" /></div><div><div className="stat-value" style={{ color: 'var(--warning)' }}>{pending}</div><div className="stat-label">Pending</div></div></div>
-        <div className="stat-card"><div className="stat-icon" style={{ background: '#f0fdf4' }}><CheckCircle size={22} color="var(--success)" /></div><div><div className="stat-value" style={{ color: 'var(--success)' }}>{resolved}</div><div className="stat-label">Resolved</div></div></div>
-        <div className="stat-card"><div className="stat-icon" style={{ background: '#fef2f2' }}><AlertTriangle size={22} color="var(--danger)" /></div><div><div className="stat-value" style={{ color: 'var(--danger)' }}>{critical}</div><div className="stat-label">Critical</div></div></div>
+        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/my-complaints')}><div className="stat-icon" style={{ background: '#eff6ff' }}><List size={22} color="var(--primary)" /></div><div><div className="stat-value" style={{ color: 'var(--primary)' }}>{total}</div><div className="stat-label">Total Assigned</div></div></div>
+        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/complaints?status=submitted,assigned,in_progress')}><div className="stat-icon" style={{ background: '#fff7ed' }}><Clock size={22} color="var(--warning)" /></div><div><div className="stat-value" style={{ color: 'var(--warning)' }}>{pending}</div><div className="stat-label">Pending</div></div></div>
+        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/complaints?status=resolved')}><div className="stat-icon" style={{ background: '#f0fdf4' }}><CheckCircle size={22} color="var(--success)" /></div><div><div className="stat-value" style={{ color: 'var(--success)' }}>{resolved}</div><div className="stat-label">Resolved</div></div></div>
+        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/complaints?priority=critical')}><div className="stat-icon" style={{ background: '#fef2f2' }}><AlertTriangle size={22} color="var(--danger)" /></div><div><div className="stat-value" style={{ color: 'var(--danger)' }}>{critical}</div><div className="stat-label">Critical</div></div></div>
       </div>
 
       <div className="card" style={{ marginBottom: 20 }}>

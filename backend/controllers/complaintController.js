@@ -165,7 +165,7 @@ exports.submitComplaint = asyncHandler(async (req, res) => {
 
 // ---- List complaints (role-filtered) ----
 exports.getComplaints = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 20, status, category, priority, department, ward, search, sort = '-createdAt', state } = req.query;
+  const { page = 1, limit = 20, status, category, priority, department, ward, search, sort = '-createdAt', state, sentiment, hasDuplicates, isCritical } = req.query;
   const stateFilter = getStateFilter(req.user);
   const query = { ...stateFilter };
 
@@ -186,6 +186,10 @@ exports.getComplaints = asyncHandler(async (req, res) => {
   if (department && ['cm', 'super_admin'].includes(req.user.role)) query.department = department;
   if (ward) query.ward = ward;
   if (search) query.$text = { $search: search };
+
+  if (sentiment) query['aiAnalysis.sentiment'] = sentiment;
+  if (hasDuplicates === 'true') query.duplicateCount = { $gt: 0 };
+  if (isCritical === 'true') query.isCritical = true;
 
   const pageNum = Math.max(1, parseInt(page));
   const limitNum = Math.min(100, Math.max(1, parseInt(limit)));

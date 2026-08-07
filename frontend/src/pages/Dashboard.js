@@ -43,9 +43,9 @@ export default function Dashboard() {
       ))}
 
       <div className="grid grid-3" style={{ marginBottom: 24 }}>
-        <div className="stat-card"><div className="stat-icon" style={{ background: '#eff6ff' }}>📋</div><div><div className="stat-value" style={{ color: 'var(--primary)' }}>{complaints.length}</div><div className="stat-label">Total Submitted</div></div></div>
-        <div className="stat-card"><div className="stat-icon" style={{ background: '#fff7ed' }}><Clock size={22} color="var(--warning)" /></div><div><div className="stat-value" style={{ color: 'var(--warning)' }}>{pending}</div><div className="stat-label">In Progress</div></div></div>
-        <div className="stat-card"><div className="stat-icon" style={{ background: '#f0fdf4' }}><CheckCircle size={22} color="var(--success)" /></div><div><div className="stat-value" style={{ color: 'var(--success)' }}>{resolved}</div><div className="stat-label">Resolved</div></div></div>
+        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/complaints')}><div className="stat-icon" style={{ background: '#eff6ff' }}>📋</div><div><div className="stat-value" style={{ color: 'var(--primary)' }}>{complaints.length}</div><div className="stat-label">Total Submitted</div></div></div>
+        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/complaints?status=submitted,assigned,in_progress')}><div className="stat-icon" style={{ background: '#fff7ed' }}><Clock size={22} color="var(--warning)" /></div><div><div className="stat-value" style={{ color: 'var(--warning)' }}>{pending}</div><div className="stat-label">In Progress</div></div></div>
+        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/complaints?status=resolved')}><div className="stat-icon" style={{ background: '#f0fdf4' }}><CheckCircle size={22} color="var(--success)" /></div><div><div className="stat-value" style={{ color: 'var(--success)' }}>{resolved}</div><div className="stat-label">Resolved</div></div></div>
       </div>
 
       <div className="card">

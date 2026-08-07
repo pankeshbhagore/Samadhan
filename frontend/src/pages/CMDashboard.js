@@ -145,7 +145,7 @@ export default function CMDashboard() {
       )}
 
       <div className="grid grid-4" style={{ marginBottom: 24 }}>
-        <div className="stat-card">
+        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/complaints')}>
           <div className="stat-icon" style={{ background: '#eff6ff' }}>📋</div>
           <div><div className="stat-value" style={{ color: 'var(--primary)' }}>{stats?.total || 0}</div><div className="stat-label">Total Complaints</div></div>
         </div>
@@ -153,7 +153,7 @@ export default function CMDashboard() {
           <div className="stat-icon" style={{ background: '#fff7ed' }}>⏳</div>
           <div><div className="stat-value" style={{ color: 'var(--warning)' }}>{stats?.pending || 0}</div><div className="stat-label">Pending Action</div></div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/complaints?status=resolved')}>
           <div className="stat-icon" style={{ background: '#f0fdf4' }}>✅</div>
           <div><div className="stat-value" style={{ color: 'var(--success)' }}>{stats?.resolved || 0}</div><div className="stat-label">Resolved</div><div className="stat-change" style={{ color: 'var(--success)' }}>{stats?.resolutionRate}% rate</div></div>
         </div>
@@ -161,11 +161,11 @@ export default function CMDashboard() {
           <div className="stat-icon" style={{ background: '#fef2f2' }}>🚨</div>
           <div><div className="stat-value" style={{ color: 'var(--danger)' }}>{stats?.critical || 0}</div><div className="stat-label">Critical Alerts</div></div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/audit')}>
           <div className="stat-icon" style={{ background: '#fef2f2' }}>⚠️</div>
           <div><div className="stat-value" style={{ color: 'var(--danger)' }}>{stats?.falseClosures || 0}</div><div className="stat-label">False Closures Caught</div></div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/complaints')}>
           <div className="stat-icon" style={{ background: '#fefce8' }}>📅</div>
           <div><div className="stat-value" style={{ color: 'var(--warning)' }}>{stats?.overdueCount || 0}</div><div className="stat-label">Overdue Complaints</div></div>
         </div>

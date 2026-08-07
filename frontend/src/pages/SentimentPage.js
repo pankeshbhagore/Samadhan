@@ -87,15 +87,15 @@ export default function SentimentPage() {
       </div>
 
       <div className="grid grid-3" style={{ marginBottom: 24 }}>
-        <div className="stat-card" style={{ borderColor: 'var(--danger)', background: 'rgba(239,68,68,0.05)' }}>
+        <div className="stat-card" style={{ borderColor: 'var(--danger)', background: 'rgba(239,68,68,0.05)', cursor: 'pointer' }} onClick={() => navigate('/complaints?sentiment=Angry')}>
           <div className="stat-icon" style={{ background: 'var(--danger)', color: 'white' }}><AlertOctagon size={24} /></div>
           <div><div className="stat-value" style={{ color: 'var(--danger)' }}>{sentimentCounts.Angry}</div><div className="stat-label">Frustrated Citizens</div></div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate(`/complaints?ward=${barData[0]?.rawWard || ''}`)}>
           <div className="stat-icon" style={{ background: 'var(--warning)', color: 'white' }}><TrendingDown size={24} /></div>
           <div><div className="stat-value">{barData[0]?.ward || 'N/A'}</div><div className="stat-label">Most Critical Ward</div></div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/complaints?sentiment=Positive')}>
           <div className="stat-icon" style={{ background: 'var(--success)', color: 'white' }}><Users size={24} /></div>
           <div><div className="stat-value">{sentimentCounts.Positive}</div><div className="stat-label">Satisfied Outcomes</div></div>
         </div>
@@ -117,7 +117,8 @@ export default function SentimentPage() {
                     paddingAngle={5} 
                     dataKey="value"
                     className="clickable-chart-area"
-                    onClick={(entry) => navigate(`/complaints`)}
+                    style={{ cursor: 'pointer' }}
+                    onClick={(entry) => navigate(`/complaints?sentiment=${entry.name}`)}
                   >
                     {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                   </Pie>
@@ -138,14 +139,15 @@ export default function SentimentPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="ward" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
+                  <Tooltip cursor={{ fill: 'rgba(239,68,68,0.05)' }} />
                   <Bar 
                     dataKey="count" 
                     fill="#ef4444" 
                     name="Angry Complaints" 
                     radius={[4, 4, 0, 0]}
                     className="clickable-chart-area"
-                    onClick={(entry) => navigate(`/complaints`)}
+                    style={{ cursor: 'pointer' }}
+                    onClick={(entry) => navigate(`/complaints?ward=${entry.rawWard}&sentiment=Angry`)}
                   />
                 </BarChart>
               </ResponsiveContainer>
