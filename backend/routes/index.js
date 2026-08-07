@@ -83,6 +83,7 @@ router.post('/complaints/:id/comments', protect, mongoIdParam(), commentRules, v
 
 // ---------- Users / Officers ----------
 router.get('/users/officers', protect, authorize('cm', 'super_admin', 'department_head'), userCtrl.getOfficers);
+router.get('/users/officers/:id/analysis', protect, authorize('cm', 'super_admin', 'department_head'), userCtrl.getOfficerAnalysis);
 router.get('/users/officer-performance', protect, authorize('cm', 'super_admin', 'department_head'), userCtrl.getOfficerPerformance);
 router.get('/users', protect, authorize('super_admin'), userCtrl.getAllUsers);
 router.post('/users', protect, authorize('super_admin'), userCtrl.createUser);

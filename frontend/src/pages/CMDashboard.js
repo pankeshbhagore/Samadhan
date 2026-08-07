@@ -186,7 +186,7 @@ export default function CMDashboard() {
                 <div>
                   <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 13, color: 'var(--text-muted)' }}>DEPARTMENT BOTTLENECKS</div>
                   {anomalies.departmentBottlenecks.slice(0, 3).map((b, i) => (
-                    <div key={i} className="anomaly-alert" style={{ marginBottom: 8, padding: '10px 14px' }}>
+                    <div key={i} className="anomaly-alert hover-bg" style={{ marginBottom: 8, padding: '10px 14px', cursor: 'pointer', transition: 'background 0.2s', borderRadius: 8 }} onClick={() => b.departmentId && navigate(`/departments/${b.departmentId}`)}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                         <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--danger)' }}>{b.department}</span>
                         <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 6px', background: '#fecaca', color: '#991b1b', borderRadius: 4 }}>{b.severity.toUpperCase()}</span>
@@ -200,7 +200,7 @@ export default function CMDashboard() {
                 <div>
                   <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 13, color: 'var(--text-muted)' }}>OFFICER BEHAVIOR</div>
                   {anomalies.officerAnomalies.slice(0, 3).map((a, i) => (
-                    <div key={i} className="anomaly-alert" style={{ marginBottom: 8, padding: '10px 14px' }}>
+                    <div key={i} className="anomaly-alert hover-bg" style={{ marginBottom: 8, padding: '10px 14px', cursor: 'pointer', transition: 'background 0.2s', borderRadius: 8 }} onClick={() => a.officer?._id && navigate(`/officers/${a.officer._id}`)}>
                       <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--danger)' }}>{a.officer.name}</div>
                       <div style={{ fontSize: 12, marginTop: 4 }}>
                         {a.anomalies.map((an, j) => <div key={j}>⚠️ {an.message}</div>)}

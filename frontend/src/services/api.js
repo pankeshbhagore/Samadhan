@@ -44,6 +44,7 @@ export const addComment = (id, data) => API.post(`/complaints/${id}/comments`, d
 
 // Users / Officers
 export const getOfficers = (params) => API.get('/users/officers', { params });
+export const getOfficerAnalysis = (id) => API.get(`/users/officers/${id}/analysis`);
 export const getOfficerPerformance = (params) => API.get('/users/officer-performance', { params });
 export const getAllUsers = (params) => API.get('/users', { params });
 export const createUser = (data) => API.post('/users', data);

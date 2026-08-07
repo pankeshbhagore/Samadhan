@@ -23,6 +23,7 @@ import VisitsPage from './pages/VisitsPage';
 import AuditPage from './pages/AuditPage';
 import DepartmentsPage from './pages/DepartmentsPage';
 import DepartmentDetailPage from './pages/DepartmentDetailPage';
+import OfficerDetailPage from './pages/OfficerDetailPage';
 import MapView from './pages/MapView';
 import ProfilePage from './pages/ProfilePage';
 import UsersPage from './pages/UsersPage';
@@ -63,6 +64,7 @@ function AppRoutes() {
         <Route path="complaints/:id" element={<PrivateRoute><ComplaintDetail /></PrivateRoute>} />
         <Route path="map" element={<PrivateRoute><MapView /></PrivateRoute>} />
         <Route path="officers" element={<PrivateRoute roles={['cm', 'super_admin', 'department_head']}><OfficersPage /></PrivateRoute>} />
+        <Route path="officers/:id" element={<PrivateRoute roles={['cm', 'super_admin', 'department_head']}><OfficerDetailPage /></PrivateRoute>} />
         <Route path="users" element={<PrivateRoute roles={['super_admin']}><UsersPage /></PrivateRoute>} />
         <Route path="visits" element={<PrivateRoute roles={['cm', 'super_admin']}><VisitsPage /></PrivateRoute>} />
         <Route path="audit" element={<PrivateRoute roles={['cm', 'super_admin']}><AuditPage /></PrivateRoute>} />

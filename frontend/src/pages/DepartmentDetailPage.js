@@ -103,7 +103,7 @@ export default function DepartmentDetailPage() {
             {officers.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {officers.map(o => (
-                  <div key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', padding: '6px', borderRadius: 8, transition: 'background 0.2s' }} className="hover-bg" onClick={() => navigate(`/officers/${o.id}`)}>
                     <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--primary-light)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{o.name.charAt(0)}</div>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>

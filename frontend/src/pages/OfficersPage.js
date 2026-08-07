@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getOfficerPerformance, getDepartments } from '../services/api';
 import { Trophy } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function OfficersPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [officers, setOfficers] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -92,7 +94,7 @@ export default function OfficersPage() {
 
       <div className="grid grid-3">
         {filtered.map((o) => (
-          <div key={o.id} className="card">
+          <div key={o.id} className="card card-clickable" onClick={() => navigate(`/officers/${o.id}`)}>
             <div className="card-body">
               <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
                 <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: 18, flexShrink: 0 }}>{o.name?.charAt(0)}</div>

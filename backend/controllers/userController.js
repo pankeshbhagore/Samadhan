@@ -211,3 +211,35 @@ exports.getDepartmentAnalysis = asyncHandler(async (req, res) => {
   });
 });
 
+exports.getOfficerAnalysis = asyncHandler(async (req, res) => {
+  const officerId = req.params.id;
+  const officer = await User.findById(officerId).select('-password').populate('department');
+  
+  if (!officer || !['employee', 'department_head'].includes(officer.role)) {
+    throw new AppError('Officer not found', 404);
+  }
+
+  // Enforce state boundaries
+  if (req.user.role !== 'super_admin' && req.user.state && officer.state !== req.user.state) {
+    throw new AppError('Not authorized to access this officer', 403);
+  }
+
+  // Get recent complaints
+  const recentComplaints = await Complaint.find({ assignedTo: officerId })
+    .sort('-createdAt')
+    .limit(15)
+    .populate('citizen', 'name');
+
+  // Find any AI anomalies for this specific officer
+  const { scanOfficerAnomalies } = require('../services/anomalyDetection');
+  const allAnomalies = await scanOfficerAnomalies();
+  const officerAnomalies = allAnomalies.find(a => a.officer._id.toString() === officerId) || null;
+
+  res.json({
+    success: true,
+    officer,
+    recentComplaints,
+    anomalies: officerAnomalies
+  });
+});
+
