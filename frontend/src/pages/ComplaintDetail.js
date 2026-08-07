@@ -191,7 +191,7 @@ export default function ComplaintDetail() {
 
     return (
       <div className="card" style={{ marginBottom: 20, overflow: 'hidden' }}>
-        <div className="card-body" style={{ background: '#f8fafc', padding: '24px 20px' }}>
+        <div className="card-body" style={{ background: 'var(--bg)', padding: '24px 20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
             <div style={{ position: 'absolute', top: 14, left: 20, right: 20, height: 2, background: '#e2e8f0', zIndex: 1 }} />
             <div style={{ position: 'absolute', top: 14, left: 20, width: resolvedIdx >= 0 ? `${(Math.max(0, resolvedIdx) / 5) * 100}%` : '0%', height: 2, background: '#10b981', zIndex: 1, transition: 'width 0.4s ease' }} />
@@ -232,7 +232,7 @@ export default function ComplaintDetail() {
   };
 
   const PRIORITY_STYLES = { critical: { bg: '#fef2f2', color: '#991b1b' }, high: { bg: '#fff7ed', color: '#c2410c' }, medium: { bg: '#fffbeb', color: '#92400e' }, low: { bg: '#f0fdf4', color: '#166534' } };
-  const ps = PRIORITY_STYLES[complaint.priority] || { bg: '#f8fafc', color: 'var(--text)' };
+  const ps = PRIORITY_STYLES[complaint.priority] || { bg: 'var(--bg)', color: 'var(--text)' };
 
   return (
     <div style={{ maxWidth: 900 }}>
@@ -378,7 +378,9 @@ export default function ComplaintDetail() {
         </div>
       </div>
 
-      <CommentsThread complaintId={complaint._id} />
+      <div style={{ marginTop: 24 }}>
+        <CommentsThread complaintId={complaint._id} />
+      </div>
 
       {showAssign && (
         <div className="modal-overlay" onClick={() => setShowAssign(false)}>
