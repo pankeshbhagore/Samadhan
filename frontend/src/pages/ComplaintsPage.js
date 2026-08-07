@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { Search, Plus, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 
 export default function ComplaintsPage() {
-  const { isCitizen } = useAuth();
+  const { isCitizen, user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [complaints, setComplaints] = useState([]);
