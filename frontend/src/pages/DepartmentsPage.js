@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { getDepartments, createDepartment } from '../services/api';
+import { getDepartments, createDepartment, updateDepartment, deleteDepartment } from '../services/api';
 import { getErrorMessage } from '../utils/helpers';
 import toast from 'react-hot-toast';
-import { Plus, Building2 } from 'lucide-react';
+import { Plus, Building2, Edit2, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -18,8 +18,9 @@ export default function DepartmentsPage() {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [editId, setEditId] = useState(null);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ name: '', code: '', description: '', slaHours: 72, contactEmail: '', contactPhone: '', complaintCategories: [] });
+  const [form, setForm] = useState({ name: '', code: '', description: '', slaHours: 72, contactEmail: '', contactPhone: '', complaintCategories: [], state: '' });
   const [filterState, setFilterState] = useState('');
 
   useEffect(() => {
@@ -36,14 +37,40 @@ export default function DepartmentsPage() {
     if (!form.name.trim() || !form.code.trim()) return toast.error('Name and code are required');
     setCreating(true);
     try {
-      const { data } = await createDepartment(form);
-      setDepartments((d) => [...d, data.department]);
+      if (editId) {
+        const { data } = await updateDepartment(editId, form);
+        setDepartments((d) => d.map(x => x._id === editId ? data.department : x));
+        toast.success('Department updated!');
+      } else {
+        const { data } = await createDepartment(form);
+        setDepartments((d) => [...d, data.department]);
+        toast.success('Department created!');
+      }
       setShowCreate(false);
-      setForm({ name: '', code: '', description: '', slaHours: 72, contactEmail: '', contactPhone: '', complaintCategories: [] });
-      toast.success('Department created!');
+      setEditId(null);
+      setForm({ name: '', code: '', description: '', slaHours: 72, contactEmail: '', contactPhone: '', complaintCategories: [], state: '' });
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Failed to create department'));
+      toast.error(getErrorMessage(err, 'Failed to save department'));
     } finally { setCreating(false); }
+  };
+
+  const openEdit = (e, d) => {
+    e.stopPropagation();
+    setEditId(d._id);
+    setForm({ name: d.name, code: d.code, description: d.description || '', slaHours: d.slaHours || 72, contactEmail: d.contactEmail || '', contactPhone: d.contactPhone || '', complaintCategories: d.complaintCategories || [], state: d.state || '' });
+    setShowCreate(true);
+  };
+
+  const handleDelete = async (e, id) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this department?')) return;
+    try {
+      await deleteDepartment(id);
+      setDepartments(d => d.filter(x => x._id !== id));
+      toast.success('Department deleted');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to delete department'));
+    }
   };
 
   const toggleCategory = (cat) => setForm((f) => ({ ...f, complaintCategories: f.complaintCategories.includes(cat) ? f.complaintCategories.filter((c) => c !== cat) : [...f.complaintCategories, cat] }));
@@ -62,7 +89,7 @@ export default function DepartmentsPage() {
               {require('../utils/statesConfig').default.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
             </select>
           )}
-          <button className="btn btn-primary" onClick={() => setShowCreate(true)}><Plus size={16} /> Add Department</button>
+          <button className="btn btn-primary" onClick={() => { setEditId(null); setForm({ name: '', code: '', description: '', slaHours: 72, contactEmail: '', contactPhone: '', complaintCategories: [], state: '' }); setShowCreate(true); }}><Plus size={16} /> Add Department</button>
         </div>
       </div>
 
@@ -73,7 +100,11 @@ export default function DepartmentsPage() {
               <div className="card-body">
                 <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
                   <div style={{ width: 44, height: 44, borderRadius: 10, background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Building2 size={22} color="white" /></div>
-                  <div><div style={{ fontWeight: 700, fontSize: 14 }}>{d.name}</div><div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Code: {d.code}</div></div>
+                  <div style={{ flex: 1 }}><div style={{ fontWeight: 700, fontSize: 14 }}>{d.name}</div><div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Code: {d.code}</div></div>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <button className="btn btn-icon btn-sm btn-outline" onClick={(e) => openEdit(e, d)}><Edit2 size={12} /></button>
+                    <button className="btn btn-icon btn-sm btn-outline" style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={(e) => handleDelete(e, d._id)}><Trash2 size={12} /></button>
+                  </div>
                 </div>
                 {d.description && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>{d.description}</p>}
                 <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
@@ -96,7 +127,7 @@ export default function DepartmentsPage() {
       {showCreate && (
         <div className="modal-overlay" onClick={() => setShowCreate(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header"><div className="modal-title">Add Department</div><button className="btn btn-icon" onClick={() => setShowCreate(false)}>✕</button></div>
+            <div className="modal-header"><div className="modal-title">{editId ? 'Edit Department' : 'Add Department'}</div><button className="btn btn-icon" onClick={() => setShowCreate(false)}>✕</button></div>
             <form onSubmit={handleCreate}>
               <div className="modal-body">
                 <div className="grid grid-2">
@@ -128,7 +159,7 @@ export default function DepartmentsPage() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-outline" onClick={() => setShowCreate(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={creating}>{creating ? 'Creating...' : 'Create'}</button>
+                <button type="submit" className="btn btn-primary" disabled={creating}>{creating ? 'Saving...' : (editId ? 'Update' : 'Create')}</button>
               </div>
             </form>
           </div>

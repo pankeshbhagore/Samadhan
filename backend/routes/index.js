@@ -88,6 +88,7 @@ router.get('/users/officer-performance', protect, authorize('cm', 'super_admin',
 router.get('/users', protect, authorize('super_admin'), userCtrl.getAllUsers);
 router.post('/users', protect, authorize('super_admin'), userCtrl.createUser);
 router.put('/users/:id', protect, authorize('super_admin'), mongoIdParam(), validate, userCtrl.updateUser);
+router.delete('/users/:id', protect, authorize('super_admin'), mongoIdParam(), validate, userCtrl.deleteUser);
 router.put('/users/:id/toggle-active', protect, authorize('super_admin'), mongoIdParam(), validate, userCtrl.toggleUserActive);
 
 // ---------- Audit & AI Anomalies ----------
@@ -114,11 +115,14 @@ router.get('/departments', protect, userCtrl.getDepartments);
 router.get('/departments/:id/analysis', protect, userCtrl.getDepartmentAnalysis);
 router.post('/departments', protect, authorize('super_admin'), userCtrl.createDepartment);
 router.put('/departments/:id', protect, authorize('super_admin'), mongoIdParam(), validate, userCtrl.updateDepartment);
+router.delete('/departments/:id', protect, authorize('super_admin'), mongoIdParam(), validate, userCtrl.deleteDepartment);
 
 // ---------- CM Visits ----------
 router.post('/visits', protect, authorize('cm', 'super_admin'), visitCtrl.createVisit);
 router.get('/visits', protect, authorize('cm', 'super_admin', 'department_head'), visitCtrl.getVisits);
 router.get('/visits/:id', protect, mongoIdParam(), validate, visitCtrl.getVisit);
+router.put('/visits/:id', protect, authorize('cm', 'super_admin'), mongoIdParam(), validate, visitCtrl.updateVisit);
+router.delete('/visits/:id', protect, authorize('cm', 'super_admin'), mongoIdParam(), validate, visitCtrl.deleteVisit);
 router.post('/visits/:id/log', protect, authorize('cm', 'super_admin'), mongoIdParam(), validate, visitCtrl.addVisitLog);
 router.put('/visits/:id/complete', protect, authorize('cm', 'super_admin'), mongoIdParam(), validate, visitCtrl.completeVisit);
 

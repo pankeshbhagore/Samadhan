@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getAllUsers, createUser, toggleUserActive, getDepartments } from '../services/api';
+import { getAllUsers, createUser, toggleUserActive, getDepartments, deleteUser, updateUser } from '../services/api';
 import { getErrorMessage } from '../utils/helpers';
 import toast from 'react-hot-toast';
-import { Plus, Search, UserX, UserCheck } from 'lucide-react';
+import { Plus, Search, UserX, UserCheck, Edit2, Trash2 } from 'lucide-react';
 
 const ROLES = ['citizen', 'employee', 'department_head', 'cm', 'super_admin'];
 const CREATE_ROLES = ['employee', 'department_head', 'cm'];
@@ -14,8 +14,9 @@ export default function UsersPage() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [showCreate, setShowCreate] = useState(false);
+  const [editId, setEditId] = useState(null);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'employee', department: '', designation: '', bandwidth: 10 });
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'employee', department: '', designation: '', bandwidth: 10, state: '' });
 
   const fetchUsers = useCallback(() => {
     setLoading(true);
@@ -31,14 +32,37 @@ export default function UsersPage() {
     e.preventDefault();
     setCreating(true);
     try {
-      await createUser(form);
-      toast.success('User created successfully');
+      if (editId) {
+        await updateUser(editId, form);
+        toast.success('User updated successfully');
+      } else {
+        await createUser(form);
+        toast.success('User created successfully');
+      }
       setShowCreate(false);
-      setForm({ name: '', email: '', password: '', role: 'employee', department: '', designation: '', bandwidth: 10 });
+      setEditId(null);
+      setForm({ name: '', email: '', password: '', role: 'employee', department: '', designation: '', bandwidth: 10, state: '' });
       fetchUsers();
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Failed to create user'));
+      toast.error(getErrorMessage(err, 'Failed to save user'));
     } finally { setCreating(false); }
+  };
+
+  const openEdit = (u) => {
+    setEditId(u._id);
+    setForm({ name: u.name, email: u.email, password: '', role: u.role, department: u.department?._id || '', designation: u.designation || '', bandwidth: u.bandwidth || 10, state: u.state || '' });
+    setShowCreate(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+    try {
+      await deleteUser(id);
+      toast.success('User deleted successfully');
+      fetchUsers();
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to delete user'));
+    }
   };
 
   const handleToggle = async (u) => {
@@ -58,7 +82,7 @@ export default function UsersPage() {
           <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--primary)' }}>👥 User Management</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>{users.length} total users</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowCreate(true)}><Plus size={16} /> Add User</button>
+        <button className="btn btn-primary" onClick={() => { setEditId(null); setForm({ name: '', email: '', password: '', role: 'employee', department: '', designation: '', bandwidth: 10, state: '' }); setShowCreate(true); }}><Plus size={16} /> Add User</button>
       </div>
 
       <div className="card" style={{ marginBottom: 16 }}>
@@ -98,9 +122,13 @@ export default function UsersPage() {
                       </span>
                     </td>
                     <td>
-                      <button className={`btn btn-sm ${u.isActive ? 'btn-outline' : 'btn-success'}`} onClick={() => handleToggle(u)}>
-                        {u.isActive ? <><UserX size={12} /> Deactivate</> : <><UserCheck size={12} /> Reactivate</>}
-                      </button>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button className={`btn btn-sm btn-icon ${u.isActive ? 'btn-outline' : 'btn-success'}`} title={u.isActive ? "Deactivate" : "Reactivate"} onClick={() => handleToggle(u)}>
+                          {u.isActive ? <UserX size={14} /> : <UserCheck size={14} />}
+                        </button>
+                        <button className="btn btn-sm btn-icon btn-outline" title="Edit" onClick={() => openEdit(u)}><Edit2 size={14} /></button>
+                        <button className="btn btn-sm btn-icon" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }} title="Delete" onClick={() => handleDelete(u._id)}><Trash2 size={14} /></button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -114,7 +142,7 @@ export default function UsersPage() {
         <div className="modal-overlay" onClick={() => setShowCreate(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <div className="modal-title">Add New User</div>
+              <div className="modal-title">{editId ? 'Edit User' : 'Add New User'}</div>
               <button className="btn btn-icon" onClick={() => setShowCreate(false)}>✕</button>
             </div>
             <form onSubmit={handleCreate}>
@@ -129,10 +157,12 @@ export default function UsersPage() {
                     <input type="email" className="form-control" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required />
                   </div>
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Password *</label>
-                  <input type="password" className="form-control" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} minLength={6} required />
-                </div>
+                {!editId && (
+                  <div className="form-group">
+                    <label className="form-label">Password *</label>
+                    <input type="password" className="form-control" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} minLength={6} required />
+                  </div>
+                )}
                 <div className="grid grid-2">
                   <div className="form-group">
                     <label className="form-label">Role *</label>
@@ -174,7 +204,7 @@ export default function UsersPage() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-outline" onClick={() => setShowCreate(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={creating}>{creating ? 'Creating...' : 'Create User'}</button>
+                <button type="submit" className="btn btn-primary" disabled={creating}>{creating ? 'Saving...' : (editId ? 'Update User' : 'Create User')}</button>
               </div>
             </form>
           </div>

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { getVisits, createVisit } from '../services/api';
+import { getVisits, createVisit, updateVisit, deleteVisit } from '../services/api';
 import { getErrorMessage } from '../utils/helpers';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-import { Plus, MapPin, Calendar } from 'lucide-react';
+import { Plus, MapPin, Calendar, Edit2, Trash2 } from 'lucide-react';
 
 const STATUS_STYLES = {
   scheduled: { bg: '#eff6ff', color: '#1d4ed8' },
@@ -16,6 +16,7 @@ export default function VisitsPage() {
   const [visits, setVisits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [editId, setEditId] = useState(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ title: '', description: '', ward: '', district: '', scheduledDate: '' });
 
@@ -28,14 +29,38 @@ export default function VisitsPage() {
     if (!form.title.trim()) return toast.error('Enter visit title');
     setCreating(true);
     try {
-      const { data } = await createVisit(form);
-      setVisits((v) => [data.visit, ...v]);
+      if (editId) {
+        const { data } = await updateVisit(editId, form);
+        setVisits((v) => v.map(x => x._id === editId ? data.visit : x));
+        toast.success('Visit updated!');
+      } else {
+        const { data } = await createVisit(form);
+        setVisits((v) => [data.visit, ...v]);
+        toast.success('Visit created!');
+      }
       setShowCreate(false);
+      setEditId(null);
       setForm({ title: '', description: '', ward: '', district: '', scheduledDate: '' });
-      toast.success('Visit created!');
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Failed to create visit'));
+      toast.error(getErrorMessage(err, 'Failed to save visit'));
     } finally { setCreating(false); }
+  };
+
+  const openEdit = (v) => {
+    setEditId(v._id);
+    setForm({ title: v.title, description: v.description || '', ward: v.ward || '', district: v.district || '', scheduledDate: v.scheduledDate ? new Date(v.scheduledDate).toISOString().slice(0, 16) : '' });
+    setShowCreate(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this visit?')) return;
+    try {
+      await deleteVisit(id);
+      setVisits(v => v.filter(x => x._id !== id));
+      toast.success('Visit deleted');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to delete visit'));
+    }
   };
 
   return (
@@ -45,7 +70,7 @@ export default function VisitsPage() {
           <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--primary)' }}>🚗 State Admin Visit Logs</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Track field visits, nearby complaints, and follow-up actions</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowCreate(true)}><Plus size={16} /> Plan Visit</button>
+        <button className="btn btn-primary" onClick={() => { setEditId(null); setForm({ title: '', description: '', ward: '', district: '', scheduledDate: '' }); setShowCreate(true); }}><Plus size={16} /> Plan Visit</button>
       </div>
 
       {loading ? <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><div className="spinner" /></div> :
@@ -72,7 +97,11 @@ export default function VisitsPage() {
                     </div>
                     <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'right' }}>
                       {v.scheduledDate && <div><Calendar size={12} style={{ marginRight: 4 }} />{format(new Date(v.scheduledDate), 'dd MMM yyyy')}</div>}
-                      {(v.ward || v.district) && <div><MapPin size={12} style={{ marginRight: 4 }} />{[v.ward, v.district].filter(Boolean).join(', ')}</div>}
+                      {(v.ward || v.district) && <div style={{ marginBottom: 6 }}><MapPin size={12} style={{ marginRight: 4 }} />{[v.ward, v.district].filter(Boolean).join(', ')}</div>}
+                      <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end', marginTop: 8 }}>
+                        <button className="btn btn-icon btn-sm btn-outline" title="Edit" onClick={() => openEdit(v)}><Edit2 size={12} /></button>
+                        <button className="btn btn-icon btn-sm btn-outline" style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }} title="Delete" onClick={() => handleDelete(v._id)}><Trash2 size={12} /></button>
+                      </div>
                     </div>
                   </div>
 
@@ -101,7 +130,7 @@ export default function VisitsPage() {
       {showCreate && (
         <div className="modal-overlay" onClick={() => setShowCreate(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header"><div className="modal-title">📍 Plan New Visit</div><button className="btn btn-icon" onClick={() => setShowCreate(false)}>✕</button></div>
+            <div className="modal-header"><div className="modal-title">{editId ? '📍 Edit Visit' : '📍 Plan New Visit'}</div><button className="btn btn-icon" onClick={() => setShowCreate(false)}>✕</button></div>
             <form onSubmit={handleCreate}>
               <div className="modal-body">
                 <div className="form-group"><label className="form-label">Visit Title *</label><input className="form-control" placeholder="e.g. Dwarka Sector 12 Field Visit" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} /></div>
@@ -114,7 +143,7 @@ export default function VisitsPage() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-outline" onClick={() => setShowCreate(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={creating}>{creating ? 'Creating...' : 'Create Visit'}</button>
+                <button type="submit" className="btn btn-primary" disabled={creating}>{creating ? 'Saving...' : (editId ? 'Update Visit' : 'Create Visit')}</button>
               </div>
             </form>
           </div>

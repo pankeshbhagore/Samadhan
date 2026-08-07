@@ -111,6 +111,23 @@ exports.toggleUserActive = asyncHandler(async (req, res) => {
   res.json({ success: true, user: user.toSafeObject() });
 });
 
+exports.deleteUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (!user) throw new AppError('User not found', 404);
+  if (user._id.toString() === req.user._id.toString()) throw new AppError('You cannot delete your own account', 400);
+
+  // Instead of hard delete, we could soft delete, but user requested full CRUD delete
+  await User.findByIdAndDelete(req.params.id);
+
+  await AuditLog.create({
+    action: 'USER_DELETED',
+    entityType: 'user', entityId: user._id, performedBy: req.user._id,
+    state: user.state
+  });
+
+  res.json({ success: true, message: 'User deleted successfully' });
+});
+
 exports.getDepartments = asyncHandler(async (req, res) => {
   const { state } = req.query;
   const query = { isActive: true };
@@ -139,6 +156,21 @@ exports.updateDepartment = asyncHandler(async (req, res) => {
   const dept = await Department.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
   if (!dept) throw new AppError('Department not found', 404);
   res.json({ success: true, department: dept });
+});
+
+exports.deleteDepartment = asyncHandler(async (req, res) => {
+  const dept = await Department.findById(req.params.id);
+  if (!dept) throw new AppError('Department not found', 404);
+
+  // Check if department has active complaints
+  const Complaint = require('../models/Complaint');
+  const complaintCount = await Complaint.countDocuments({ department: dept._id });
+  if (complaintCount > 0) {
+    throw new AppError(`Cannot delete department. It is assigned to ${complaintCount} complaints.`, 400);
+  }
+
+  await Department.findByIdAndDelete(req.params.id);
+  res.json({ success: true, message: 'Department deleted successfully' });
 });
 
 exports.getAuditLogs = asyncHandler(async (req, res) => {

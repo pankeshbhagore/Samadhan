@@ -62,3 +62,20 @@ exports.completeVisit = asyncHandler(async (req, res) => {
 
   res.json({ success: true, visit });
 });
+
+exports.updateVisit = asyncHandler(async (req, res) => {
+  const { title, description, ward, district, scheduledDate } = req.body;
+  const updates = { title, description, ward, district, scheduledDate };
+  Object.keys(updates).forEach(key => updates[key] === undefined && delete updates[key]);
+  
+  const visit = await CMVisit.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
+  if (!visit) throw new AppError('Visit not found', 404);
+  res.json({ success: true, visit });
+});
+
+exports.deleteVisit = asyncHandler(async (req, res) => {
+  const visit = await CMVisit.findById(req.params.id);
+  if (!visit) throw new AppError('Visit not found', 404);
+  await CMVisit.findByIdAndDelete(req.params.id);
+  res.json({ success: true, message: 'Visit deleted successfully' });
+});

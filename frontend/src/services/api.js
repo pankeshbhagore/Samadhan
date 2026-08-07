@@ -49,6 +49,7 @@ export const getOfficerPerformance = (params) => API.get('/users/officer-perform
 export const getAllUsers = (params) => API.get('/users', { params });
 export const createUser = (data) => API.post('/users', data);
 export const updateUser = (id, data) => API.put(`/users/${id}`, data);
+export const deleteUser = (id) => API.delete(`/users/${id}`);
 export const toggleUserActive = (id) => API.put(`/users/${id}/toggle-active`);
 
 // Audit & AI
@@ -61,10 +62,13 @@ export const getDepartments = (params) => API.get('/departments', { params });
 export const getDepartmentAnalysis = (id) => API.get(`/departments/${id}/analysis`);
 export const createDepartment = (data) => API.post('/departments', data);
 export const updateDepartment = (id, data) => API.put(`/departments/${id}`, data);
+export const deleteDepartment = (id) => API.delete(`/departments/${id}`);
 
 // Visits
 export const createVisit = (data) => API.post('/visits', data);
-export const getVisits = () => API.get('/visits');
+export const updateVisit = (id, data) => API.put(`/visits/${id}`, data);
+export const deleteVisit = (id) => API.delete(`/visits/${id}`);
+export const getVisits = (params) => API.get('/visits', { params });
 export const getVisit = (id) => API.get(`/visits/${id}`);
 export const addVisitLog = (id, data) => API.post(`/visits/${id}/log`, data);
 export const completeVisit = (id, data) => API.put(`/visits/${id}/complete`, data);
