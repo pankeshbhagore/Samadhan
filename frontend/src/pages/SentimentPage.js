@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import { getComplaints } from '../services/api';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { BrainCircuit, AlertOctagon, TrendingDown, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -16,7 +16,7 @@ export default function SentimentPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await api.get('/complaints');
+        const res = await getComplaints();
         setData(res.data.data);
       } catch (err) {
         console.error(err);
