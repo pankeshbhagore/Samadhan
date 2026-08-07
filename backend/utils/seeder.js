@@ -51,7 +51,7 @@ async function seed() {
   const statuses = ['submitted', 'under_review', 'assigned', 'in_progress', 'pending_verification', 'resolved'];
 
   // 1 Global Super Admin
-  await User.create({ name: 'Super Admin', email: 'admin@samadhan.gov.in', password, role: 'super_admin', designation: 'All India Administrator', isActive: true, state: null });
+  await User.insertMany([{ name: 'Super Admin', email: 'admin@samadhan.gov.in', password, role: 'super_admin', designation: 'All India Administrator', isActive: true, state: null }]);
   console.log('Created Super Admin.');
 
   for (const stateObj of statesData) {

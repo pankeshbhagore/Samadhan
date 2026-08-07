@@ -64,47 +64,46 @@ export default function Login() {
             
             <div style={{ borderTop: '1px solid var(--border)', margin: '12px 0' }}></div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12, marginBottom: 12 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>Select State:</label>
-                <select className="form-control" value={demoState} onChange={(e) => setDemoState(e.target.value)} style={{ padding: '6px 10px', fontSize: 13 }}>
-                  {statesConfig.map(s => <option key={s.code} value={s.code.toLowerCase()}>{s.name}</option>)}
-                </select>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 8 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>Select Dept:</label>
-                  <select className="form-control" value={demoDept} onChange={(e) => setDemoDept(e.target.value)} style={{ padding: '6px 10px', fontSize: 13 }}>
-                    <option value="roads">Roads & Infra</option>
-                    <option value="water">Water Board</option>
-                    <option value="sanit">Sanitation</option>
-                    <option value="elec">Electricity</option>
-                    <option value="traffic">Traffic</option>
-                    <option value="env">Environment</option>
-                    <option value="parks">Parks</option>
-                    <option value="build">Building</option>
-                    <option value="health">Health</option>
-                    <option value="transport">Transport</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>Officer ID:</label>
-                  <select className="form-control" value={demoOfficerId} onChange={(e) => setDemoOfficerId(e.target.value)} style={{ padding: '6px 10px', fontSize: 13 }}>
-                    <option value="1">#1</option>
-                    <option value="2">#2</option>
-                    <option value="3">#3</option>
-                    <option value="4">#4</option>
-                    <option value="5">#5</option>
-                  </select>
-                </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>1. Select State:</label>
+              <select className="form-control" value={demoState} onChange={(e) => setDemoState(e.target.value)} style={{ padding: '6px 10px', fontSize: 13, marginBottom: 8, width: '100%' }}>
+                {statesConfig.map(s => <option key={s.code} value={s.code.toLowerCase()}>{s.name}</option>)}
+              </select>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <button type="button" onClick={() => quickLogin(`cm@${demoState}.samadhan.gov.in`)} className="btn btn-outline btn-sm">👑 Chief Minister</button>
+                <button type="button" onClick={() => quickLogin(`citizen1@${demoState}.example.com`)} className="btn btn-outline btn-sm">👤 Citizen</button>
               </div>
             </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <button type="button" onClick={() => quickLogin(`cm@${demoState}.samadhan.gov.in`)} className="btn btn-outline btn-sm">👑 Chief Minister</button>
-              <button type="button" onClick={() => quickLogin(`dh.${demoDept}@${demoState}.samadhan.gov.in`)} className="btn btn-outline btn-sm">🏢 Dept Head</button>
-              <button type="button" onClick={() => quickLogin(`officer${demoOfficerId}.${demoDept}@${demoState}.samadhan.gov.in`)} className="btn btn-outline btn-sm">👮 Officer</button>
-              <button type="button" onClick={() => quickLogin(`citizen1@${demoState}.example.com`)} className="btn btn-outline btn-sm">👤 Citizen</button>
+
+            <div style={{ borderTop: '1px dashed var(--border)', margin: '16px 0' }}></div>
+
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>2. Select Department & Officer:</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 8, marginBottom: 8 }}>
+                <select className="form-control" value={demoDept} onChange={(e) => setDemoDept(e.target.value)} style={{ padding: '6px 10px', fontSize: 13 }}>
+                  <option value="roads">Roads & Infra</option>
+                  <option value="water">Water Board</option>
+                  <option value="sanit">Sanitation</option>
+                  <option value="elec">Electricity</option>
+                  <option value="traffic">Traffic</option>
+                  <option value="env">Environment</option>
+                  <option value="parks">Parks</option>
+                  <option value="build">Building</option>
+                  <option value="health">Health</option>
+                  <option value="transport">Transport</option>
+                </select>
+                <select className="form-control" value={demoOfficerId} onChange={(e) => setDemoOfficerId(e.target.value)} style={{ padding: '6px 10px', fontSize: 13 }}>
+                  <option value="1">ID: #1</option>
+                  <option value="2">ID: #2</option>
+                  <option value="3">ID: #3</option>
+                  <option value="4">ID: #4</option>
+                  <option value="5">ID: #5</option>
+                </select>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <button type="button" onClick={() => quickLogin(`dh.${demoDept}@${demoState}.samadhan.gov.in`)} className="btn btn-outline btn-sm">🏢 Dept Head</button>
+                <button type="button" onClick={() => quickLogin(`officer${demoOfficerId}.${demoDept}@${demoState}.samadhan.gov.in`)} className="btn btn-outline btn-sm">👮 Officer</button>
+              </div>
             </div>
           </div>
 
