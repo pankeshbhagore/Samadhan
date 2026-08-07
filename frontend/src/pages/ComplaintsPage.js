@@ -71,7 +71,7 @@ export default function ComplaintsPage() {
     getOfficers(params).then(res => setOfficers(res.data.officers)).catch(() => {});
   }, [filters.department, filters.state, user?.role]);
 
-  const setFilter = (key, val) => setFilters((f) => ({ ...f, [key]: val, page: 1 }));
+  const setFilter = (key, val) => setFilters((f) => ({ ...f, [key]: val, ...(key !== 'page' && { page: 1 }) }));
 
   const handleSearchChange = (value) => {
     setSearchInput(value);
