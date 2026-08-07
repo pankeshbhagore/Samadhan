@@ -173,6 +173,12 @@ exports.getComplaints = asyncHandler(async (req, res) => {
     query.state = state;
   }
 
+  // Apply explicit filters (which were previously missing)
+  if (status) query.status = status.includes(',') ? { $in: status.split(',') } : status;
+  if (category) query.category = category;
+  if (priority) query.priority = priority;
+  if (req.query.assignedTo) query.assignedTo = req.query.assignedTo;
+
   // Handle assignedTo and department filtering via stateFilter instead of manually,
   // except for explicit overrides like admin filtering by department.
   if (department && ['cm', 'super_admin'].includes(req.user.role)) query.department = department;

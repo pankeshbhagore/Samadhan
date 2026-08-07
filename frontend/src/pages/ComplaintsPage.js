@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getComplaints } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { CATEGORY_OPTIONS, PRIORITY_COLORS, formatStatus, formatCategory, exportToCSV } from '../utils/helpers';
+import { getDepartments, getOfficers } from '../services/api';
 import { SkeletonTableRows } from '../components/shared/Skeletons';
 import { format } from 'date-fns';
 import { Search, Plus, ChevronLeft, ChevronRight, Download } from 'lucide-react';
@@ -20,9 +21,14 @@ export default function ComplaintsPage() {
     priority: searchParams.get('priority') || '',
     category: searchParams.get('category') || '',
     state: searchParams.get('state') || '',
+    department: '',
+    assignedTo: '',
     search: '',
     page: 1
   });
+  
+  const [departments, setDepartments] = useState([]);
+  const [officers, setOfficers] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const searchTimeout = useRef(null);
 
@@ -42,6 +48,24 @@ export default function ComplaintsPage() {
   }, [filters, user?.role]);
 
   useEffect(() => { fetchComplaints(); }, [fetchComplaints]);
+
+  // Fetch departments when state changes (or globally if admin)
+  useEffect(() => {
+    const params = {};
+    if (user?.role === 'super_admin' && filters.state) params.state = filters.state;
+    getDepartments(params).then(res => setDepartments(res.data.departments)).catch(() => {});
+  }, [filters.state, user?.role]);
+
+  // Fetch officers when department changes
+  useEffect(() => {
+    if (!filters.department) {
+      setOfficers([]);
+      return;
+    }
+    const params = { department: filters.department };
+    if (user?.role === 'super_admin' && filters.state) params.state = filters.state;
+    getOfficers(params).then(res => setOfficers(res.data.officers)).catch(() => {});
+  }, [filters.department, filters.state, user?.role]);
 
   const setFilter = (key, val) => setFilters((f) => ({ ...f, [key]: val, page: 1 }));
 
@@ -106,11 +130,23 @@ export default function ComplaintsPage() {
               <input className="form-control" placeholder="Search complaints..." style={{ paddingLeft: 32 }} value={searchInput} onChange={(e) => handleSearchChange(e.target.value)} />
             </div>
             {user?.role === 'super_admin' && (
-              <select className="form-control" style={{ flex: '1 1 140px' }} value={filters.state} onChange={(e) => setFilter('state', e.target.value)}>
+              <select className="form-control" style={{ flex: '1 1 140px' }} value={filters.state} onChange={(e) => {
+                setFilters(f => ({ ...f, state: e.target.value, department: '', assignedTo: '', page: 1 }));
+              }}>
                 <option value="">All India</option>
                 {require('../utils/statesConfig').default.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
               </select>
             )}
+            <select className="form-control" style={{ flex: '1 1 140px' }} value={filters.department} onChange={(e) => {
+              setFilters(f => ({ ...f, department: e.target.value, assignedTo: '', page: 1 }));
+            }}>
+              <option value="">All Departments</option>
+              {departments.map(d => <option key={d._id} value={d._id}>{d.name}</option>)}
+            </select>
+            <select className="form-control" style={{ flex: '1 1 140px' }} value={filters.assignedTo} onChange={(e) => setFilter('assignedTo', e.target.value)} disabled={!filters.department}>
+              <option value="">All Officers</option>
+              {officers.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select>
             <select className="form-control" style={{ flex: '1 1 140px' }} value={filters.status} onChange={(e) => setFilter('status', e.target.value)}>
               <option value="">All Status</option>
               {['submitted', 'under_review', 'assigned', 'in_progress', 'pending_verification', 'resolved', 'reopened', 'escalated', 'rejected'].map((s) => (
@@ -128,8 +164,8 @@ export default function ComplaintsPage() {
               <option value="">All Categories</option>
               {CATEGORY_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
-            {(filters.status || filters.priority || filters.category) && (
-              <button className="btn btn-outline btn-sm" onClick={() => setFilters({ status: '', priority: '', category: '', search: '', page: 1 })}>Clear</button>
+            {(filters.status || filters.priority || filters.category || filters.department || filters.assignedTo) && (
+              <button className="btn btn-outline btn-sm" onClick={() => setFilters({ status: '', priority: '', category: '', search: '', department: '', assignedTo: '', page: 1 })}>Clear</button>
             )}
           </div>
         </div>
