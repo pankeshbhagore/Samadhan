@@ -99,10 +99,24 @@ exports.createUser = asyncHandler(async (req, res) => {
   const existing = await User.findOne({ email: email?.toLowerCase() });
   if (existing) throw new AppError('Email already registered', 400);
 
-  // RBAC for creation
+  // RBAC for strict hierarchical creation
   const targetState = req.user.role === 'super_admin' ? state : req.user.state;
-  const targetDepartment = req.user.role === 'department_head' ? req.user.department : department;
-  const targetRole = req.user.role === 'department_head' ? 'employee' : role;
+  let targetDepartment = department;
+  let targetRole = role;
+
+  if (req.user.role === 'department_head') {
+    targetDepartment = req.user.department;
+    targetRole = 'employee';
+  } else if (req.user.role === 'cm') {
+    targetRole = 'department_head';
+    // Department must be provided for department_head
+    if (!targetDepartment) throw new AppError('Department is required for Department Head', 400);
+  } else if (req.user.role === 'super_admin') {
+    targetRole = 'cm';
+    targetDepartment = null;
+    // State must be provided for State Admin
+    if (!targetState) throw new AppError('State is required for State Admin', 400);
+  }
 
   const user = await User.create({ name, email, password, phone, role: targetRole, department: targetDepartment, designation, employeeId, bandwidth, ward, district, state: targetState });
   res.status(201).json({ success: true, user: user.toSafeObject() });

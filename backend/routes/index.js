@@ -71,6 +71,7 @@ router.get('/complaints/export', protect, authorize('cm', 'super_admin', 'depart
 router.get('/complaints', protect, complaintCtrl.getComplaints);
 router.get('/complaints/nearby', protect, complaintCtrl.getNearbyComplaints);
 router.get('/complaints/stats', protect, authorize('cm', 'super_admin', 'department_head'), complaintCtrl.getDashboardStats);
+router.get('/complaints/my-stats', protect, authorize('citizen', 'employee', 'department_head'), complaintCtrl.getMyStats);
 router.get('/complaints/:id', protect, mongoIdParam(), validate, complaintCtrl.getComplaint);
 router.post('/complaints/:id/assign', protect, authorize('cm', 'super_admin', 'department_head'), mongoIdParam(), assignRules, validate, complaintCtrl.assignComplaint);
 router.put('/complaints/:id/status', protect, authorize('employee', 'department_head', 'super_admin'), mongoIdParam(), upload.array('images', 5), statusUpdateRules, validate, complaintCtrl.updateStatus);

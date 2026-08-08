@@ -54,6 +54,7 @@ export const toggleUserActive = (id) => API.put(`/users/${id}/toggle-active`);
 
 // Audit & AI
 export const getAuditLogs = (params) => API.get('/audit-logs', { params });
+export const getMyStats = () => API.get('/complaints/my-stats');
 export const getAiAnomalies = (params) => API.get('/ai/anomalies', { params });
 export const generatePressRelease = () => API.get('/reports/press-release');
 

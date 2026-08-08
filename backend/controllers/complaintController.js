@@ -622,6 +622,33 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
   });
 });
 
+// ---- Get My Personal/Employee Accurate Stats ----
+exports.getMyStats = asyncHandler(async (req, res) => {
+  const query = {};
+  if (req.user.role === 'citizen') query.citizen = req.user._id;
+  if (req.user.role === 'employee') query.assignedTo = req.user._id;
+  if (req.user.role === 'department_head') {
+    query.department = req.user.department;
+    if (req.user.state) query.state = req.user.state;
+  }
+
+  const [total, resolved, critical] = await Promise.all([
+    Complaint.countDocuments(query),
+    Complaint.countDocuments({ ...query, status: 'resolved' }),
+    Complaint.countDocuments({ ...query, isCritical: true }),
+  ]);
+
+  res.json({
+    success: true,
+    stats: {
+      total,
+      resolved,
+      critical,
+      pending: total - resolved
+    }
+  });
+});
+
 // ---- Export complaints to CSV (Admin/CM only) ----
 exports.exportComplaintsCSV = asyncHandler(async (req, res) => {
   const { status, category, department, state } = req.query;

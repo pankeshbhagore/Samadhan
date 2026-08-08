@@ -110,6 +110,8 @@ complaintSchema.index({ citizen: 1 });
 complaintSchema.index({ assignedTo: 1 });
 complaintSchema.index({ department: 1 });
 complaintSchema.index({ createdAt: -1 });
+complaintSchema.index({ state: 1, createdAt: -1 }); // Fast State Admin Aggregations
+complaintSchema.index({ state: 1, department: 1, createdAt: -1 }); // Fast Dept Head Aggregations
 complaintSchema.index({ title: 'text', description: 'text' });
 
 // Atomic ticket ID generation — no race condition under concurrent submits

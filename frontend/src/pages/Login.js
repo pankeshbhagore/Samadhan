@@ -21,7 +21,8 @@ export default function Login() {
     try {
       const { user } = await login(form);
       toast.success(`Welcome, ${user.name}!`);
-      if (user.role === 'cm') navigate('/cm-dashboard');
+      if (user.role === 'super_admin') navigate('/super-admin-dashboard');
+      else if (user.role === 'cm') navigate('/cm-dashboard');
       else if (['employee', 'department_head'].includes(user.role)) navigate('/my-complaints');
       else navigate('/dashboard');
     } catch (err) {

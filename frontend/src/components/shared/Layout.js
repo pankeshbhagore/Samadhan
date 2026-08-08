@@ -27,7 +27,7 @@ const NAV = {
     { to: '/users', label: 'User Management', icon: UserIcon },
   ],
   super_admin: [
-    { to: '/cm-dashboard', label: 'All India Dashboard', icon: LayoutDashboard },
+    { to: '/super-admin-dashboard', label: 'All India Dashboard', icon: LayoutDashboard },
     { to: '/sentiment', label: 'Public Sentiment', icon: BrainCircuit },
     { to: '/fraud-detection', label: 'AI Fraud Detection', icon: ShieldAlert },
     { to: '/complaints', label: 'All Complaints', icon: FileText },

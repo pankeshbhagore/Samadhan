@@ -147,10 +147,12 @@ export default function ComplaintsPage() {
               <option value="">All Departments</option>
               {departments.map(d => <option key={d._id} value={d._id}>{d.name}</option>)}
             </select>
-            <select className="form-control" style={{ flex: '1 1 140px' }} value={filters.assignedTo} onChange={(e) => setFilter('assignedTo', e.target.value)} disabled={!filters.department}>
-              <option value="">All Officers</option>
-              {officers.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-            </select>
+            {['super_admin', 'cm', 'department_head'].includes(user?.role) && (
+              <select className="form-control" style={{ flex: '1 1 140px' }} value={filters.assignedTo} onChange={(e) => setFilter('assignedTo', e.target.value)} disabled={!filters.department}>
+                <option value="">All Officers</option>
+                {officers.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+              </select>
+            )}
             <select className="form-control" style={{ flex: '1 1 140px' }} value={filters.status} onChange={(e) => setFilter('status', e.target.value)}>
               <option value="">All Status</option>
               {['submitted', 'under_review', 'assigned', 'in_progress', 'pending_verification', 'resolved', 'reopened', 'escalated', 'rejected'].map((s) => (

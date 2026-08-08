@@ -6,6 +6,7 @@
 
 const User = require('../models/User');
 const Complaint = require('../models/Complaint');
+const Department = require('../models/Department');
 const AuditLog = require('../models/AuditLog');
 const { detectOfficerAnomaly } = require('./aiClassification');
 

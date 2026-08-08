@@ -11,7 +11,8 @@ function buildCommands({ navigate, user, isAdmin, isCM, isEmployee, isCitizen, t
   const commands = [];
   const add = (label, icon, action, keywords = '') => commands.push({ label, icon, action, keywords: keywords.toLowerCase() });
 
-  if (isCM() || user?.role === 'super_admin') add('Go to State Admin Dashboard', LayoutDashboard, () => navigate('/cm-dashboard'), 'home overview stats');
+  if (isCM()) add('Go to State Admin Dashboard', LayoutDashboard, () => navigate('/cm-dashboard'), 'home overview stats');
+  if (user?.role === 'super_admin') add('Go to All India Dashboard', LayoutDashboard, () => navigate('/super-admin-dashboard'), 'home overview stats');
   if (isCitizen()) add('Go to My Dashboard', LayoutDashboard, () => navigate('/dashboard'), 'home overview');
   if (isEmployee()) add('Go to My Tasks', ClipboardList, () => navigate('/my-complaints'), 'tasks assigned');
 

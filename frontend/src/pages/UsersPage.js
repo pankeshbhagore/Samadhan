@@ -6,7 +6,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { Plus, Search, UserX, UserCheck, Edit2, Trash2, ShieldAlert } from 'lucide-react';
 
 const ROLES = ['citizen', 'employee', 'department_head', 'cm', 'super_admin'];
-const CREATE_ROLES = ['employee', 'department_head', 'cm'];
+
+const getDefaultRole = (userRole) => {
+  if (userRole === 'super_admin') return 'cm';
+  if (userRole === 'cm') return 'department_head';
+  return 'employee';
+};
 
 const getRolesForUser = (userRole, deptFilter) => {
   let allowed = [];
@@ -55,6 +60,76 @@ export default function UsersPage() {
     getDepartments(stateFilter ? { state: stateFilter } : undefined)
       .then(({ data }) => setDepartments(data.departments)); 
   }, [stateFilter]);
+
+  useEffect(() => {
+    if (showCreate && !editId) {
+      const targetRole = form.role;
+      const targetState = form.state || user?.state || 'MH';
+      const targetDeptId = form.department || user?.department?._id;
+      
+      let nextNum = 1;
+      
+      if (targetRole === 'cm' && targetState) {
+        const stateObj = require('../utils/statesConfig').default.find(s => s.code === targetState);
+        if (stateObj) {
+          const stateCMs = users.filter(u => u.role === 'cm' && u.state === targetState);
+          stateCMs.forEach(u => {
+            const match = u.email.match(/^cm(\d+)@/);
+            if (match) nextNum = Math.max(nextNum, parseInt(match[1]) + 1);
+          });
+          // Only overwrite if it matches pattern or is empty
+          setForm(f => {
+            if (f.email && !/^cm\d+@/.test(f.email)) return f;
+            return {
+              ...f,
+              name: `State Admin ${nextNum} ${targetState}`,
+              email: `cm${nextNum}@${targetState.toLowerCase()}.samadhan.gov.in`,
+              password: f.password || 'Password123!',
+            };
+          });
+        }
+      } else if (targetRole === 'department_head' && targetDeptId) {
+        const deptObj = departments.find(d => d._id === targetDeptId);
+        if (deptObj) {
+          const deptHeads = users.filter(u => u.role === 'department_head' && (u.department?._id === targetDeptId || u.department === targetDeptId));
+          deptHeads.forEach(u => {
+            const match = u.email.match(/^head(\d+)\./);
+            if (match) nextNum = Math.max(nextNum, parseInt(match[1]) + 1);
+          });
+          const deptSlug = deptObj.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+          setForm(f => {
+            if (f.email && !/^head\d+\./.test(f.email)) return f;
+            return {
+              ...f,
+              name: `Head ${deptObj.name} ${nextNum} ${targetState}`,
+              email: `head${nextNum}.${deptSlug}@${targetState.toLowerCase()}.samadhan.gov.in`,
+              password: f.password || 'Password123!',
+            };
+          });
+        }
+      } else if (targetRole === 'employee' && targetDeptId) {
+        const deptObj = departments.find(d => d._id === targetDeptId) || (user?.department?._id === targetDeptId ? user.department : null);
+        if (deptObj) {
+          const emps = users.filter(u => u.role === 'employee' && (u.department?._id === targetDeptId || u.department === targetDeptId));
+          emps.forEach(u => {
+            const match = u.email.match(/^officer(\d+)\./);
+            if (match) nextNum = Math.max(nextNum, parseInt(match[1]) + 1);
+          });
+          const deptSlug = (deptObj.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          setForm(f => {
+            if (f.email && !/^officer\d+\./.test(f.email)) return f;
+            return {
+              ...f,
+              name: `Officer ${deptObj.name} ${nextNum} ${targetState}`,
+              email: `officer${nextNum}.${deptSlug}@${targetState.toLowerCase()}.samadhan.gov.in`,
+              designation: `Officer - ${deptObj.name}`,
+              password: f.password || 'Password123!',
+            };
+          });
+        }
+      }
+    }
+  }, [showCreate, editId, form.role, form.department, form.state, users, departments, user]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -140,7 +215,7 @@ export default function UsersPage() {
           <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--primary)' }}>👥 User Management</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>{users.length} total users</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setEditId(null); setForm({ name: '', email: '', password: '', role: 'employee', department: '', designation: '', bandwidth: 10, state: '' }); setShowCreate(true); }}><Plus size={16} /> Add User</button>
+        <button className="btn btn-primary" onClick={() => { setEditId(null); setForm({ name: '', email: '', password: '', role: getDefaultRole(user?.role), department: '', designation: '', bandwidth: 10, state: '' }); setShowCreate(true); }}><Plus size={16} /> Add User</button>
       </div>
 
       <div className="card" style={{ marginBottom: 16 }}>
@@ -235,13 +310,8 @@ export default function UsersPage() {
                     <input type="password" className="form-control" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} minLength={6} required />
                   </div>
                 )}
-                <div className="grid grid-2">
-                  <div className="form-group">
-                    <label className="form-label">Role *</label>
-                    <select className="form-control" value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}>
-                      {CREATE_ROLES.map((r) => <option key={r} value={r}>{r === 'cm' ? 'State Admin' : r.replace('_', ' ')}</option>)}
-                    </select>
-                  </div>
+                
+                {form.role === 'cm' && (
                   <div className="form-group">
                     <label className="form-label">State</label>
                     <select className="form-control" value={form.state} onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}>
@@ -249,29 +319,29 @@ export default function UsersPage() {
                       {require('../utils/statesConfig').default.map((s) => <option key={s.code} value={s.code}>{s.name}</option>)}
                     </select>
                   </div>
-                </div>
-                <div className="grid grid-2">
-                  {['employee', 'department_head'].includes(form.role) && (
-                    <div className="form-group">
-                      <label className="form-label">Department</label>
-                      <select className="form-control" value={form.department} onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}>
-                        <option value="">None</option>
-                        {departments.filter(d => !form.state || d.state === form.state).map((d) => <option key={d._id} value={d._id}>{d.name} {!form.state ? `(${d.state})` : ''}</option>)}
-                      </select>
-                    </div>
-                  )}
-                  {form.role === 'employee' && (
+                )}
+
+                {form.role === 'department_head' && (
+                  <div className="form-group">
+                    <label className="form-label">Department</label>
+                    <select className="form-control" value={form.department} onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}>
+                      <option value="">None</option>
+                      {departments.filter(d => !user?.state || d.state === user?.state).map((d) => <option key={d._id} value={d._id}>{d.name}</option>)}
+                    </select>
+                  </div>
+                )}
+
+                {form.role === 'employee' && (
+                  <>
                     <div className="form-group">
                       <label className="form-label">Designation</label>
                       <input className="form-control" value={form.designation} onChange={(e) => setForm((f) => ({ ...f, designation: e.target.value }))} />
                     </div>
-                  )}
-                </div>
-                {form.role === 'employee' && (
-                  <div className="form-group">
-                    <label className="form-label">Bandwidth (max complaints)</label>
-                    <input type="number" className="form-control" min={1} value={form.bandwidth} onChange={(e) => setForm((f) => ({ ...f, bandwidth: parseInt(e.target.value) || 1 }))} />
-                  </div>
+                    <div className="form-group">
+                      <label className="form-label">Bandwidth (max complaints)</label>
+                      <input type="number" className="form-control" min={1} value={form.bandwidth} onChange={(e) => setForm((f) => ({ ...f, bandwidth: parseInt(e.target.value) || 1 }))} />
+                    </div>
+                  </>
                 )}
               </div>
               <div className="modal-footer">

@@ -1,27 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { getComplaints } from '../services/api';
+import { getComplaints, getMyStats } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { formatCategory, formatStatus } from '../utils/helpers';
 import { format } from 'date-fns';
-import { Plus, CheckCircle, Clock } from 'lucide-react';
+import { Plus, CheckCircle, Clock, FileText } from 'lucide-react';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [myStats, setMyStats] = useState({ total: 0, pending: 0, resolved: 0 });
 
   useEffect(() => {
-    getComplaints({ limit: 10000 })
-      .then(({ data }) => setComplaints(data.complaints))
-      .catch((err) => toast.error('Failed to load complaints'))
+    Promise.all([
+      getComplaints({ limit: 100 }),
+      getMyStats()
+    ]).then(([complaintsRes, statsRes]) => {
+      setComplaints(complaintsRes.data.complaints);
+      setMyStats(statsRes.data.stats);
+    }).catch(() => toast.error('Failed to load dashboard data'))
       .finally(() => setLoading(false));
   }, []);
 
-  const pending = complaints.filter((c) => !['resolved', 'rejected'].includes(c.status)).length;
-  const resolved = complaints.filter((c) => c.status === 'resolved').length;
   const needsVerification = complaints.filter((c) => c.status === 'pending_verification');
 
   return (
@@ -52,13 +55,16 @@ export default function Dashboard() {
       ))}
 
       <div className="grid grid-3" style={{ marginBottom: 24 }}>
-        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/complaints')}><div className="stat-icon" style={{ background: '#eff6ff' }}>📋</div><div><div className="stat-value" style={{ color: 'var(--primary)' }}>{complaints.length}</div><div className="stat-label">Total Submitted</div></div></div>
-        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/complaints?status=submitted,assigned,in_progress')}><div className="stat-icon" style={{ background: '#fff7ed' }}><Clock size={22} color="var(--warning)" /></div><div><div className="stat-value" style={{ color: 'var(--warning)' }}>{pending}</div><div className="stat-label">In Progress</div></div></div>
-        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/complaints?status=resolved')}><div className="stat-icon" style={{ background: '#f0fdf4' }}><CheckCircle size={22} color="var(--success)" /></div><div><div className="stat-value" style={{ color: 'var(--success)' }}>{resolved}</div><div className="stat-label">Resolved</div></div></div>
+        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/complaints')}><div className="stat-icon" style={{ background: '#f0fdf4' }}><FileText size={22} color="var(--success)" /></div><div><div className="stat-value" style={{ color: 'var(--success)' }}>{myStats.total}</div><div className="stat-label">Total Submitted</div></div></div>
+        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/complaints')}><div className="stat-icon" style={{ background: '#fff7ed' }}><Clock size={22} color="var(--warning)" /></div><div><div className="stat-value" style={{ color: 'var(--warning)' }}>{myStats.pending}</div><div className="stat-label">In Progress</div></div></div>
+        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/complaints?status=resolved')}><div className="stat-icon" style={{ background: '#eff6ff' }}><CheckCircle size={22} color="var(--primary)" /></div><div><div className="stat-value" style={{ color: 'var(--primary)' }}>{myStats.resolved}</div><div className="stat-label">Resolved</div></div></div>
       </div>
 
       <div className="card">
-        <div className="card-header"><div className="card-title">Recent Complaints</div><button className="btn btn-sm btn-outline" onClick={() => navigate('/complaints')}>View All</button></div>
+        <div style={{ padding: 20, borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600 }}>Recent Complaints (Max 100)</h2>
+          <button className="btn btn-outline" style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => navigate('/complaints')}>View Entire Data</button>
+        </div>
         <div className="card-body">
           {loading ? <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}><div className="spinner" /></div> :
           complaints.length === 0 ? (
