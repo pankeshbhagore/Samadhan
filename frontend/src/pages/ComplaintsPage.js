@@ -113,14 +113,53 @@ export default function ComplaintsPage() {
 
   const priorityDot = (p) => <span style={{ width: 8, height: 8, borderRadius: '50%', background: PRIORITY_COLORS[p] || '#ccc', display: 'inline-block', marginRight: 4 }} />;
 
+  const getPageTitle = () => {
+    if (isCitizen()) return 'My Complaints';
+    if (filters.sentiment === 'Angry') return '🚨 Frustrated Citizens (Unresolved)';
+    if (filters.sentiment === 'Positive') return '✅ Satisfied Outcomes (Resolved)';
+    if (filters.sentiment === 'Neutral') return 'Neutral Complaints';
+    if (filters.isCritical === 'true') return '🚨 Critical Complaints';
+    if (filters.hasDuplicates === 'true') return 'Duplicate Complaints';
+    return 'All Complaints';
+  };
+
+  const handleSentimentToggle = (newSentiment) => {
+    setFilters(f => ({ ...f, sentiment: newSentiment, page: 1 }));
+    searchParams.set('sentiment', newSentiment);
+    navigate(`/complaints?${searchParams.toString()}`, { replace: true });
+  };
+
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--primary)' }}>{isCitizen() ? 'My Complaints' : 'All Complaints'}</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--primary)' }}>{getPageTitle()}</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>{pagination.total || 0} total complaints</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
+          {filters.sentiment && (
+            <>
+              {filters.sentiment !== 'Angry' && (
+                <button className="btn btn-outline" onClick={() => handleSentimentToggle('Angry')} style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}>
+                  Frustrated (Unresolved)
+                </button>
+              )}
+              {filters.sentiment !== 'Positive' && (
+                <button className="btn btn-outline" onClick={() => handleSentimentToggle('Positive')} style={{ borderColor: 'var(--success)', color: 'var(--success)' }}>
+                  Satisfied (Resolved)
+                </button>
+              )}
+              {filters.sentiment !== 'Neutral' && (
+                <button className="btn btn-outline" onClick={() => handleSentimentToggle('Neutral')} style={{ borderColor: 'var(--warning)', color: 'var(--warning)' }}>
+                  Neutral
+                </button>
+              )}
+              <div style={{ width: 1, background: 'var(--border)', margin: '0 4px' }} />
+              <button className="btn btn-outline" onClick={() => navigate('/sentiment')} style={{ background: '#f8fafc' }}>
+                <ChevronLeft size={16} /> Back
+              </button>
+            </>
+          )}
           <button className="btn btn-outline" onClick={handleExportCSV} disabled={complaints.length === 0}><Download size={16} /> Export CSV</button>
           {isCitizen() && <button className="btn btn-primary" onClick={() => navigate('/complaints/new')}><Plus size={16} /> Submit Complaint</button>}
         </div>

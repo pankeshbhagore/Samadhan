@@ -194,7 +194,17 @@ exports.getComplaints = asyncHandler(async (req, res) => {
     }
   }
 
-  if (sentiment) query['aiAnalysis.sentiment'] = sentiment;
+  if (sentiment) {
+    if (sentiment === 'Angry') {
+      query.status = { $ne: 'resolved' };
+      query.sentimentLabel = { $in: ['highly_frustrated', 'frustrated'] };
+    } else if (sentiment === 'Positive') {
+      query.status = 'resolved';
+    } else if (sentiment === 'Neutral') {
+      query.status = { $ne: 'resolved' };
+      query.sentimentLabel = { $nin: ['highly_frustrated', 'frustrated'] };
+    }
+  }
   if (hasDuplicates === 'true') query.duplicateCount = { $gt: 0 };
   if (isCritical === 'true') query.isCritical = true;
 
@@ -589,7 +599,7 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
   }
   const mongoose = require('mongoose');
   if (req.user.role === 'department_head' && req.user.department) {
-    stateFilter.department = new mongoose.Types.ObjectId(req.user.department._id || req.user.department);
+    stateFilter.department = new mongoose.Types.ObjectId(req.user.department);
   }
   
   let rangeFilter = { ...stateFilter };
