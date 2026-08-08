@@ -589,7 +589,7 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
   }
   const mongoose = require('mongoose');
   if (req.user.role === 'department_head' && req.user.department) {
-    stateFilter.department = new mongoose.Types.ObjectId(req.user.department);
+    stateFilter.department = new mongoose.Types.ObjectId(req.user.department._id || req.user.department);
   }
   
   let rangeFilter = { ...stateFilter };

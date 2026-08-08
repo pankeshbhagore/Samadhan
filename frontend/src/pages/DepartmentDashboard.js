@@ -248,32 +248,32 @@ export default function DepartmentDashboard() {
       <div className="grid grid-2" style={{ marginBottom: 24 }}>
         <div className="card">
           <div className="card-header">
-            <div className="card-title">🏢 Department Performance</div>
+            <div className="card-title">👨‍✈️ Top Officers Performance</div>
             <button className="btn btn-sm btn-outline" onClick={() => navigate('/officers')}>View All</button>
           </div>
           <div className="card-body">
             <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={stats?.topDepts?.map((d) => ({ dept: d.dept?.[0]?.name?.split(' ')?.[0] || 'Unknown', deptId: d._id, total: d.total, resolved: d.resolved })) || []}>
+              <BarChart data={officers.slice(0, 5).map((o) => ({ name: o.name?.split(' ')?.[0] || 'Unknown', officerId: o._id, resolved: o.stats?.totalResolved || 0, active: (o.stats?.totalAssigned || 0) - (o.stats?.totalResolved || 0) }))}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="dept" tick={{ fontSize: 10 }} />
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
                 <Legend />
-                <Bar 
-                  dataKey="total" 
-                  fill="#1a3a6b" 
-                  name="Total" 
-                  radius={[4, 4, 0, 0]} 
-                  className="clickable-chart-area"
-                  onClick={(data) => navigate(data.deptId ? `/departments/${data.deptId}` : '/departments')}
-                />
                 <Bar 
                   dataKey="resolved" 
                   fill="#16a34a" 
                   name="Resolved" 
                   radius={[4, 4, 0, 0]} 
                   className="clickable-chart-area"
-                  onClick={(data) => navigate(data.deptId ? `/departments/${data.deptId}` : '/departments')}
+                  onClick={(data) => navigate(data.officerId ? `/officers/${data.officerId}` : '/officers')}
+                />
+                <Bar 
+                  dataKey="active" 
+                  fill="#d97706" 
+                  name="Active" 
+                  radius={[4, 4, 0, 0]} 
+                  className="clickable-chart-area"
+                  onClick={(data) => navigate(data.officerId ? `/officers/${data.officerId}` : '/officers')}
                 />
               </BarChart>
             </ResponsiveContainer>
