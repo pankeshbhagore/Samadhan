@@ -34,6 +34,7 @@ export const submitComplaint = (data) => API.post('/complaints', data);
 export const getComplaints = (params) => API.get('/complaints', { params });
 export const getComplaint = (id) => API.get(`/complaints/${id}`);
 export const assignComplaint = (id, data) => API.post(`/complaints/${id}/assign`, data);
+export const remindDeptHead = (id) => API.put(`/complaints/${id}/remind`);
 export const updateComplaintStatus = (id, data) => API.put(`/complaints/${id}/status`, data);
 export const citizenVerify = (id, data) => API.post(`/complaints/${id}/verify`, data);
 export const upvoteComplaint = (id) => API.post(`/complaints/${id}/upvote`);

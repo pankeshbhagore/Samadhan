@@ -1,44 +1,49 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { getDashboardStats, getComplaints, getAiAnomalies } from '../services/api';
+import { getDashboardStats, getComplaints, getAiAnomalies, getOfficerPerformance } from '../services/api';
 import { formatCategory, formatStatus, DATE_RANGE_PRESETS } from '../utils/helpers';
 import statesConfig, { getStateName } from '../utils/statesConfig';
 import { useAuth } from '../contexts/AuthContext';
 import { SkeletonStatsGrid } from '../components/shared/Skeletons';
-import { TrendingUp, Users, Clock, AlertTriangle, ShieldCheck, Download, Activity, FileText, ChevronRight, CheckCircle, X } from 'lucide-react';
+import { AlertTriangle, FileText, CheckCircle, X, Download, Briefcase } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
 const COLORS = ['#1a3a6b', '#ff6b35', '#16a34a', '#d97706', '#7c3aed', '#0891b2', '#db2777', '#65a30d'];
 
-export default function SuperAdminDashboard() {
+export default function DepartmentDashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [criticalComplaints, setCriticalComplaints] = useState([]);
   const [anomalies, setAnomalies] = useState(null);
+  const [officers, setOfficers] = useState([]);
+  const [myComplaints, setMyComplaints] = useState([]);
+  const [activeTab, setActiveTab] = useState('active');
   const [loading, setLoading] = useState(true);
   const [rangeDays, setRangeDays] = useState(null); // null = all time
-  const [selectedState, setSelectedState] = useState(''); // empty = all states (for super admin)
   const navigate = useNavigate();
 
   const fetchStats = useCallback(() => {
     setLoading(true);
     const params = {};
     if (rangeDays !== null) params.days = rangeDays;
-    if (user?.role === 'super_admin' && selectedState) params.state = selectedState;
 
     Promise.all([
       getDashboardStats(params),
-      getComplaints({ priority: 'critical', status: 'submitted,under_review,assigned,in_progress', limit: 5, ...(user?.role === 'super_admin' && selectedState ? { state: selectedState } : {}) }),
-      getAiAnomalies(params)
-    ]).then(([statsRes, critRes, anomalyRes]) => {
+      getComplaints({ priority: 'critical', status: 'submitted,under_review,assigned,in_progress', limit: 5 }),
+      getAiAnomalies(params),
+      getOfficerPerformance(),
+      getComplaints({ limit: 100 })
+    ]).then(([statsRes, critRes, anomalyRes, officersRes, compRes]) => {
       setStats(statsRes.data.stats);
       setCriticalComplaints(critRes.data.complaints);
       setAnomalies(anomalyRes.data);
+      if (officersRes) setOfficers(officersRes.data.officers || []);
+      if (compRes) setMyComplaints(compRes.data.complaints || []);
     }).finally(() => setLoading(false));
-  }, [rangeDays, selectedState, user?.role]);
+  }, [rangeDays]);
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
@@ -107,20 +112,18 @@ export default function SuperAdminDashboard() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--primary)' }}>👑 All India Super Admin Dashboard</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Welcome, {user?.name} — Manage the entire nation's grievance redressal system</p>
+          <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em' }}>
+            Department Head Dashboard
+          </h1>
           <p style={{ color: 'var(--text-muted)', marginTop: 4 }}>
-            {user?.role === 'super_admin' && !selectedState ? 'All India' : getStateName(user?.role === 'super_admin' ? selectedState : user?.state)} Grievance Intelligence System • {format(new Date(), 'EEEE, d MMMM yyyy')}
+            {user?.department?.name || 'Department'} • {format(new Date(), 'EEEE, d MMMM yyyy')}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-          {user?.role === 'super_admin' && (
-            <select className="form-control" value={selectedState} onChange={(e) => setSelectedState(e.target.value)} style={{ minWidth: 200 }}>
-              <option value="">All India (Global View)</option>
-              {statesConfig.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
-            </select>
-          )}
           <div className="date-range-pills">
+          <button className="btn btn-primary btn-sm" onClick={() => navigate('/my-complaints')} style={{ padding: '8px 16px', background: 'var(--primary)', color: '#fff' }}>
+            <Briefcase size={14} style={{ marginRight: 6 }} /> Manage Operations
+          </button>
           <button className="btn btn-outline btn-sm" onClick={handleExportCSV} disabled={exportLoading}>
             {exportLoading ? 'Exporting...' : <><Download size={14} style={{ marginRight: 6 }} /> Export CSV</>}
           </button>
@@ -175,40 +178,22 @@ export default function SuperAdminDashboard() {
         </div>
       </div>
 
-      {anomalies && (anomalies.officerAnomalies?.length > 0 || anomalies.departmentBottlenecks?.length > 0) && (
+      {anomalies && anomalies.officerAnomalies?.length > 0 && (
         <div className="card" style={{ marginBottom: 24, border: '1px solid rgba(124, 58, 237, 0.3)' }}>
           <div className="card-header" style={{ background: 'linear-gradient(135deg, rgba(26, 58, 107, 0.05), rgba(124, 58, 237, 0.05))', borderRadius: '12px 12px 0 0' }}>
             <div className="card-title">🤖 AI Insights & Anomalies</div>
           </div>
           <div className="card-body">
-            <div className="grid grid-2">
-              {anomalies.departmentBottlenecks?.length > 0 && (
-                <div>
-                  <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 13, color: 'var(--text-muted)' }}>DEPARTMENT BOTTLENECKS</div>
-                  {anomalies.departmentBottlenecks.slice(0, 3).map((b, i) => (
-                    <div key={i} className="anomaly-alert hover-bg" style={{ marginBottom: 8, padding: '10px 14px', cursor: 'pointer', transition: 'background 0.2s', borderRadius: 8 }} onClick={() => b.departmentId && navigate(`/departments/${b.departmentId}`)}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--danger)' }}>{b.department}</span>
-                        <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 6px', background: '#fecaca', color: '#991b1b', borderRadius: 4 }}>{b.severity.toUpperCase()}</span>
-                      </div>
-                      <div style={{ fontSize: 12 }}>{b.overdue} overdue complaints • Avg age: {b.avgAgeHours}h</div>
-                    </div>
-                  ))}
+            <div>
+              <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 13, color: 'var(--text-muted)' }}>OFFICER BEHAVIOR</div>
+              {anomalies.officerAnomalies.slice(0, 6).map((a, i) => (
+                <div key={i} className="anomaly-alert hover-bg" style={{ marginBottom: 8, padding: '10px 14px', cursor: 'pointer', transition: 'background 0.2s', borderRadius: 8 }} onClick={() => a.officer?._id && navigate(`/officers/${a.officer._id}`)}>
+                  <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--danger)' }}>{a.officer.name}</div>
+                  <div style={{ fontSize: 12, marginTop: 4 }}>
+                    {a.anomalies.map((an, j) => <div key={j}>⚠️ {an.message}</div>)}
+                  </div>
                 </div>
-              )}
-              {anomalies.officerAnomalies?.length > 0 && (
-                <div>
-                  <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 13, color: 'var(--text-muted)' }}>OFFICER BEHAVIOR</div>
-                  {anomalies.officerAnomalies.slice(0, 3).map((a, i) => (
-                    <div key={i} className="anomaly-alert hover-bg" style={{ marginBottom: 8, padding: '10px 14px', cursor: 'pointer', transition: 'background 0.2s', borderRadius: 8 }} onClick={() => a.officer?._id && navigate(`/officers/${a.officer._id}`)}>
-                      <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--danger)' }}>{a.officer.name}</div>
-                      <div style={{ fontSize: 12, marginTop: 4 }}>
-                        {a.anomalies.map((an, j) => <div key={j}>⚠️ {an.message}</div>)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              ))}
             </div>
           </div>
         </div>
@@ -231,7 +216,7 @@ export default function SuperAdminDashboard() {
         </div>
 
         <div className="card">
-          <div className="card-header"><div className="card-title">🏷️ Complaints by Category</div></div>
+          <div className="card-header"><div className="card-title">🍩 Complaints by Category</div></div>
           <div className="card-body">
             {categoryData.length === 0 ? (
               <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No data yet</div>
@@ -263,7 +248,7 @@ export default function SuperAdminDashboard() {
       <div className="grid grid-2" style={{ marginBottom: 24 }}>
         <div className="card">
           <div className="card-header">
-            <div className="card-title">🏛️ Department Performance</div>
+            <div className="card-title">🏢 Department Performance</div>
             <button className="btn btn-sm btn-outline" onClick={() => navigate('/officers')}>View All</button>
           </div>
           <div className="card-body">
@@ -336,6 +321,8 @@ export default function SuperAdminDashboard() {
           </div>
         </div>
       </div>
+
+
       
       {prReport && (
         <div className="modal-overlay" onClick={() => setPrReport(null)}>

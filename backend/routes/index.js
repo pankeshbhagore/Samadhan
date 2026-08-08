@@ -74,6 +74,7 @@ router.get('/complaints/stats', protect, authorize('cm', 'super_admin', 'departm
 router.get('/complaints/my-stats', protect, authorize('citizen', 'employee', 'department_head'), complaintCtrl.getMyStats);
 router.get('/complaints/:id', protect, mongoIdParam(), validate, complaintCtrl.getComplaint);
 router.post('/complaints/:id/assign', protect, authorize('cm', 'super_admin', 'department_head'), mongoIdParam(), assignRules, validate, complaintCtrl.assignComplaint);
+router.put('/complaints/:id/remind', protect, authorize('cm', 'super_admin'), mongoIdParam(), validate, complaintCtrl.remindDeptHead);
 router.put('/complaints/:id/status', protect, authorize('employee', 'department_head', 'super_admin'), mongoIdParam(), upload.array('images', 5), statusUpdateRules, validate, complaintCtrl.updateStatus);
 router.post('/complaints/:id/verify', protect, authorize('citizen'), mongoIdParam(), verifyRules, validate, complaintCtrl.citizenVerify);
 router.post('/complaints/:id/upvote', protect, mongoIdParam(), validate, complaintCtrl.upvoteComplaint);
@@ -95,12 +96,19 @@ router.put('/users/:id/toggle-active', protect, authorize('super_admin', 'cm', '
 // ---------- Audit & AI Anomalies ----------
 router.get('/audit-logs', protect, authorize('cm', 'super_admin'), userCtrl.getAuditLogs);
 
-router.get('/ai/anomalies', protect, authorize('cm', 'super_admin'), async (req, res) => {
+router.get('/ai/anomalies', protect, authorize('cm', 'super_admin', 'department_head'), async (req, res) => {
   const { scanOfficerAnomalies, detectDepartmentBottlenecks } = require('../services/anomalyDetection');
-  const stateFilter = req.user.role === 'cm' ? req.user.state : (req.query.state || null);
+  const filter = {};
+  if (req.user.role === 'cm') filter.state = req.user.state;
+  if (req.user.role === 'department_head') {
+    filter.state = req.user.state;
+    filter.department = req.user.department;
+  }
+  if (req.user.role === 'super_admin' && req.query.state) filter.state = req.query.state;
+  
   const [officerAnomalies, departmentBottlenecks] = await Promise.all([
-    scanOfficerAnomalies(stateFilter),
-    detectDepartmentBottlenecks(stateFilter),
+    scanOfficerAnomalies(filter),
+    detectDepartmentBottlenecks(filter),
   ]);
   res.json({ success: true, officerAnomalies, departmentBottlenecks });
 });

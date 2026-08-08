@@ -278,6 +278,27 @@ exports.trackPublic = asyncHandler(async (req, res) => {
 });
 
 // ---- Assign to officer ----
+exports.remindDeptHead = asyncHandler(async (req, res) => {
+  const complaint = await Complaint.findById(req.params.id);
+  if (!complaint) throw new AppError('Complaint not found', 404);
+  if (complaint.status === 'resolved') throw new AppError('Complaint already resolved', 400);
+  
+  if (!['cm', 'super_admin'].includes(req.user.role)) {
+    throw new AppError('Not authorized to send admin reminders', 403);
+  }
+
+  complaint.adminReminder = true;
+  await complaint.save();
+
+  await AuditLog.create({
+    action: 'ADMIN_REMINDER_SENT',
+    entityType: 'complaint', entityId: complaint._id, performedBy: req.user._id,
+    state: complaint.state
+  });
+
+  res.json({ success: true, message: 'Department Head notified successfully' });
+});
+
 exports.assignComplaint = asyncHandler(async (req, res) => {
   const { officerId, note } = req.body;
   if (!officerId) throw new AppError('officerId is required', 400);
@@ -307,7 +328,8 @@ exports.assignComplaint = asyncHandler(async (req, res) => {
   complaint.assignedTo = officerId;
   complaint.assignedBy = req.user._id;
   complaint.assignedAt = new Date();
-  if (complaint.status === 'submitted' || complaint.status === 'under_review') complaint.status = 'assigned';
+  complaint.status = 'assigned';
+  complaint.adminReminder = false;
   complaint.timeline.push({ status: 'assigned', message: note || `Assigned to ${officer.name}`, updatedBy: req.user._id });
   await complaint.save();
 
@@ -565,6 +587,10 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
   if (req.user.role === 'super_admin' && state) {
     stateFilter.state = state;
   }
+  const mongoose = require('mongoose');
+  if (req.user.role === 'department_head' && req.user.department) {
+    stateFilter.department = new mongoose.Types.ObjectId(req.user.department);
+  }
   
   let rangeFilter = { ...stateFilter };
   if (hasRange && !Number.isNaN(numDays)) {
@@ -581,7 +607,7 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
 
   const [statusCounts, categoryCounts, priorityCounts, recentCritical, topDepts, trend, falseClosures, overdueCount] = await Promise.all([
     Complaint.aggregate([{ $match: rangeFilter }, { $group: { _id: '$status', count: { $sum: 1 } } }]),
-    Complaint.aggregate([{ $match: rangeFilter }, { $group: { _id: '$category', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 10 }]),
+    Complaint.aggregate([{ $match: rangeFilter }, { $group: { _id: '$category', count: { $sum: 1 }, resolved: { $sum: { $cond: [{ $eq: ['$status', 'resolved'] }, 1, 0] } } } }, { $sort: { count: -1 } }, { $limit: 10 }]),
     Complaint.aggregate([{ $match: rangeFilter }, { $group: { _id: '$priority', count: { $sum: 1 } } }]),
     Complaint.find({ isCritical: true, status: { $nin: ['resolved'] }, ...stateFilter }).sort('-createdAt').limit(5).populate('department', 'name'),
     Complaint.aggregate([

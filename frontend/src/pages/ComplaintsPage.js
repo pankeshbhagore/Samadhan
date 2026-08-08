@@ -7,7 +7,7 @@ import { CATEGORY_OPTIONS, PRIORITY_COLORS, formatStatus, formatCategory, export
 import { getDepartments, getOfficers } from '../services/api';
 import { SkeletonTableRows } from '../components/shared/Skeletons';
 import { format } from 'date-fns';
-import { Search, Plus, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { Search, Plus, ChevronLeft, ChevronRight, Download, AlertTriangle } from 'lucide-react';
 
 export default function ComplaintsPage() {
   const { isCitizen, user } = useAuth();
@@ -141,12 +141,14 @@ export default function ComplaintsPage() {
                 {require('../utils/statesConfig').default.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
               </select>
             )}
-            <select className="form-control" style={{ flex: '1 1 140px' }} value={filters.department} onChange={(e) => {
-              setFilters(f => ({ ...f, department: e.target.value, assignedTo: '', page: 1 }));
-            }}>
-              <option value="">All Departments</option>
-              {departments.map(d => <option key={d._id} value={d._id}>{d.name}</option>)}
-            </select>
+            {!['department_head', 'employee'].includes(user?.role) && (
+              <select className="form-control" style={{ flex: '1 1 140px' }} value={filters.department} onChange={(e) => {
+                setFilters(f => ({ ...f, department: e.target.value, assignedTo: '', page: 1 }));
+              }}>
+                <option value="">All Departments</option>
+                {departments.map(d => <option key={d._id} value={d._id}>{d.name}</option>)}
+              </select>
+            )}
             {['super_admin', 'cm', 'department_head'].includes(user?.role) && (
               <select className="form-control" style={{ flex: '1 1 140px' }} value={filters.assignedTo} onChange={(e) => setFilter('assignedTo', e.target.value)} disabled={!filters.department}>
                 <option value="">All Officers</option>
@@ -205,10 +207,19 @@ export default function ComplaintsPage() {
               </thead>
               <tbody>
                 {complaints.map((c) => (
-                  <tr key={c._id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/complaints/${c._id}`)}>
+                  <tr key={c._id} style={{ cursor: 'pointer', background: c.adminReminder ? '#fff1f2' : 'transparent' }} onClick={() => navigate(`/complaints/${c._id}`)}>
                     <td>
-                      <span style={{ fontFamily: 'monospace', fontSize: 12, background: 'var(--card-hover)', padding: '2px 6px', borderRadius: 4 }}>{c.ticketId}</span>
-                      {c.isCritical && <span style={{ marginLeft: 4 }}>🚨</span>}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <div>
+                          <span style={{ fontFamily: 'monospace', fontSize: 12, background: c.adminReminder ? '#ffe4e6' : 'var(--card-hover)', padding: '2px 6px', borderRadius: 4, color: c.adminReminder ? '#be123c' : 'inherit', fontWeight: c.adminReminder ? 600 : 'normal' }}>{c.ticketId}</span>
+                          {c.isCritical && <span style={{ marginLeft: 4 }}>🚨</span>}
+                        </div>
+                        {c.adminReminder && (
+                          <div style={{ fontSize: 10, color: '#be123c', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <AlertTriangle size={10} /> State Admin Reminder
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td>
                       <div style={{ fontWeight: 500, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.title}</div>

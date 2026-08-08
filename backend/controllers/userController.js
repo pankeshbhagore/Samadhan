@@ -10,6 +10,10 @@ exports.getOfficers = asyncHandler(async (req, res) => {
   const stateFilter = getStateFilter(req.user);
   const query = { role: { $in: ['employee', 'department_head'] }, isActive: true, ...stateFilter };
 
+  if (req.user.role === 'department_head') {
+    query.role = 'employee';
+  }
+
   if (department) query.department = department;
   if (req.user.role === 'super_admin' && state) query.state = state;
 
@@ -30,23 +34,100 @@ exports.getOfficerPerformance = asyncHandler(async (req, res) => {
   const stateFilter = getStateFilter(req.user);
   const query = { role: { $in: ['employee', 'department_head'] }, isActive: true, ...stateFilter };
 
+  if (req.user.role === 'department_head') {
+    query.role = 'employee';
+  }
+
   if (req.user.role === 'super_admin' && state) {
     query.state = state;
   }
 
-  const officers = await User.find(query).populate('department', 'name').select('-password').sort('-stats.totalResolved');
+  const officers = await User.find(query).populate('department', 'name').select('-password').lean();
 
-  const data = officers.map((o) => ({
-    id: o._id,
-    name: o.name,
-    department: o.department?.name,
-    designation: o.designation,
-    stats: o.stats,
-    activeComplaints: o.activeComplaints,
-    bandwidth: o.bandwidth,
-    capacityPercent: o.bandwidth > 0 ? Math.round((o.activeComplaints / o.bandwidth) * 100) : 0,
-    falseClosureRate: o.stats.totalAssigned > 0 ? ((o.stats.falseClosures / o.stats.totalAssigned) * 100).toFixed(1) : '0'
-  }));
+  const empIds = officers.filter(o => o.role === 'employee').map(o => o._id);
+  const deptIds = officers.filter(o => o.role === 'department_head' && o.department).map(o => o.department._id);
+
+  const empStatsAggr = await Complaint.aggregate([
+    { $match: { assignedTo: { $in: empIds } } },
+    { $group: {
+        _id: '$assignedTo',
+        totalAssigned: { $sum: 1 },
+        totalResolved: { $sum: { $cond: [{ $eq: ['$status', 'resolved'] }, 1, 0] } },
+        activeComplaints: { $sum: { $cond: [{ $ne: ['$status', 'resolved'] }, 1, 0] } },
+        avgTime: { $avg: { $cond: [{ $eq: ['$status', 'resolved'] }, '$resolutionTimeHours', null] } },
+        avgSat: { $avg: { $cond: [{ $eq: ['$status', 'resolved'] }, '$verification.satisfactionRating', null] } }
+      }
+    }
+  ]);
+
+  const deptStatsAggr = await Complaint.aggregate([
+    { $match: { department: { $in: deptIds } } },
+    { $group: {
+        _id: '$department',
+        totalAssigned: { $sum: 1 },
+        totalResolved: { $sum: { $cond: [{ $eq: ['$status', 'resolved'] }, 1, 0] } },
+        activeComplaints: { $sum: { $cond: [{ $ne: ['$status', 'resolved'] }, 1, 0] } },
+        avgTime: { $avg: { $cond: [{ $eq: ['$status', 'resolved'] }, '$resolutionTimeHours', null] } },
+        avgSat: { $avg: { $cond: [{ $eq: ['$status', 'resolved'] }, '$verification.satisfactionRating', null] } }
+      }
+    }
+  ]);
+
+  const empStatsMap = {};
+  empStatsAggr.forEach(s => { empStatsMap[s._id.toString()] = s; });
+  
+  const deptStatsMap = {};
+  deptStatsAggr.forEach(s => { deptStatsMap[s._id.toString()] = s; });
+
+  const workloadAggr = await User.aggregate([
+    { $match: { role: 'employee', department: { $in: deptIds } } },
+    { $group: {
+        _id: '$department',
+        bandwidth: { $sum: '$bandwidth' }
+      }
+    }
+  ]);
+
+  const workloadMap = {};
+  workloadAggr.forEach(s => { workloadMap[s._id.toString()] = s; });
+
+  const data = officers.map((o) => {
+    let dynStats = { totalAssigned: 0, totalResolved: 0, activeComplaints: 0 };
+    let bandwidth = o.bandwidth || 0;
+
+    if (o.role === 'employee') {
+      dynStats = empStatsMap[o._id.toString()] || dynStats;
+    } else if (o.role === 'department_head' && o.department) {
+      dynStats = deptStatsMap[o.department._id.toString()] || dynStats;
+      const wl = workloadMap[o.department._id.toString()] || { bandwidth: 0 };
+      bandwidth = wl.bandwidth;
+    }
+    
+    let activeComplaints = dynStats.activeComplaints;
+    
+    const mergedStats = {
+      ...(o.stats || {}),
+      totalAssigned: dynStats.totalAssigned,
+      totalResolved: dynStats.totalResolved,
+      avgResolutionHours: dynStats.avgTime ? Math.round(dynStats.avgTime * 10) / 10 : 0,
+      avgSatisfactionScore: dynStats.avgSat ? Math.round(dynStats.avgSat * 10) / 10 : 0,
+    };
+
+    return {
+      id: o._id,
+      name: o.name,
+      role: o.role,
+      department: o.department?.name,
+      designation: o.designation,
+      stats: mergedStats,
+      activeComplaints,
+      bandwidth,
+      capacityPercent: bandwidth > 0 ? Math.round((activeComplaints / bandwidth) * 100) : 0,
+      falseClosureRate: mergedStats.totalAssigned > 0 ? (((mergedStats.falseClosures || 0) / mergedStats.totalAssigned) * 100).toFixed(1) : '0'
+    };
+  });
+
+  data.sort((a, b) => b.stats.totalResolved - a.stats.totalResolved);
 
   res.json({ success: true, officers: data });
 });
@@ -244,8 +325,35 @@ exports.getDepartments = asyncHandler(async (req, res) => {
   } else if (state) {
     query.state = state;
   }
-  const depts = await Department.find(query).populate('head', 'name email phone').sort('name');
-  res.json({ success: true, departments: depts });
+  const depts = await Department.find(query).populate('head', 'name email phone').sort('name').lean();
+
+  const deptIds = depts.map(d => d._id);
+  const statsAggr = await Complaint.aggregate([
+    { $match: { department: { $in: deptIds } } },
+    { $group: {
+        _id: '$department',
+        totalComplaints: { $sum: 1 },
+        resolved: { $sum: { $cond: [{ $eq: ['$status', 'resolved'] }, 1, 0] } }
+      }
+    }
+  ]);
+  
+  const statsMap = {};
+  statsAggr.forEach(s => { statsMap[s._id.toString()] = s; });
+
+  const deptsWithStats = depts.map(d => {
+    const s = statsMap[d._id.toString()] || { totalComplaints: 0, resolved: 0 };
+    return {
+      ...d,
+      stats: {
+        ...(d.stats || {}),
+        totalComplaints: s.totalComplaints,
+        resolved: s.resolved
+      }
+    };
+  });
+
+  res.json({ success: true, departments: deptsWithStats });
 });
 
 exports.createDepartment = asyncHandler(async (req, res) => {
@@ -358,22 +466,54 @@ exports.getDepartmentAnalysis = asyncHandler(async (req, res) => {
     throw new AppError('Not authorized to access this department', 403);
   }
 
-  // Get all officers in this department
-  const officers = await User.find({ department: departmentId, role: { $in: ['employee', 'department_head'] } })
+  // Get all employee officers in this department
+  const officers = await User.find({ department: departmentId, role: 'employee' })
     .select('-password')
-    .sort('-stats.totalResolved');
+    .lean();
 
-  const officersData = officers.map((o) => ({
-    id: o._id,
-    name: o.name,
-    role: o.role,
-    designation: o.designation,
-    stats: o.stats,
-    activeComplaints: o.activeComplaints,
-    bandwidth: o.bandwidth,
-    capacityPercent: o.bandwidth > 0 ? Math.round((o.activeComplaints / o.bandwidth) * 100) : 0,
-    falseClosureRate: o.stats.totalAssigned > 0 ? ((o.stats.falseClosures / o.stats.totalAssigned) * 100).toFixed(1) : '0'
-  }));
+  const empIds = officers.map(o => o._id);
+  const empStatsAggr = await Complaint.aggregate([
+    { $match: { assignedTo: { $in: empIds } } },
+    { $group: {
+        _id: '$assignedTo',
+        totalAssigned: { $sum: 1 },
+        totalResolved: { $sum: { $cond: [{ $eq: ['$status', 'resolved'] }, 1, 0] } },
+        activeComplaints: { $sum: { $cond: [{ $ne: ['$status', 'resolved'] }, 1, 0] } },
+        avgTime: { $avg: { $cond: [{ $eq: ['$status', 'resolved'] }, '$resolutionTimeHours', null] } },
+        avgSat: { $avg: { $cond: [{ $eq: ['$status', 'resolved'] }, '$verification.satisfactionRating', null] } }
+      }
+    }
+  ]);
+
+  const empStatsMap = {};
+  empStatsAggr.forEach(s => { empStatsMap[s._id.toString()] = s; });
+
+  const officersData = officers.map((o) => {
+    const dynStats = empStatsMap[o._id.toString()] || { totalAssigned: 0, totalResolved: 0, activeComplaints: 0 };
+    const mergedStats = {
+      ...(o.stats || {}),
+      totalAssigned: dynStats.totalAssigned,
+      totalResolved: dynStats.totalResolved,
+      avgResolutionHours: dynStats.avgTime ? Math.round(dynStats.avgTime * 10) / 10 : 0,
+      avgSatisfactionScore: dynStats.avgSat ? Math.round(dynStats.avgSat * 10) / 10 : 0,
+    };
+    const activeComplaints = dynStats.activeComplaints;
+    const bandwidth = o.bandwidth || 0;
+
+    return {
+      id: o._id,
+      name: o.name,
+      role: o.role,
+      designation: o.designation,
+      stats: mergedStats,
+      activeComplaints,
+      bandwidth,
+      capacityPercent: bandwidth > 0 ? Math.round((activeComplaints / bandwidth) * 100) : 0,
+      falseClosureRate: mergedStats.totalAssigned > 0 ? (((mergedStats.falseClosures || 0) / mergedStats.totalAssigned) * 100).toFixed(1) : '0'
+    };
+  });
+  
+  officersData.sort((a,b) => b.stats.totalResolved - a.stats.totalResolved);
 
   // Get complaint aggregates
   const complaints = await Complaint.aggregate([
@@ -416,8 +556,51 @@ exports.getOfficerAnalysis = asyncHandler(async (req, res) => {
     throw new AppError('Not authorized to access this officer', 403);
   }
 
+  // Compute real stats from complaints dynamically
+  const matchCondition = officer.role === 'department_head' ? { department: officer.department._id } : { assignedTo: officer._id };
+  
+  const aggr = await Complaint.aggregate([
+    { $match: matchCondition },
+    { $group: {
+        _id: null,
+        totalAssigned: { $sum: 1 },
+        totalResolved: { $sum: { $cond: [{ $eq: ['$status', 'resolved'] }, 1, 0] } },
+        activeComplaints: { $sum: { $cond: [{ $ne: ['$status', 'resolved'] }, 1, 0] } },
+        avgTime: { $avg: { $cond: [{ $eq: ['$status', 'resolved'] }, '$resolutionTimeHours', null] } },
+        avgSat: { $avg: { $cond: [{ $eq: ['$status', 'resolved'] }, '$verification.satisfactionRating', null] } }
+      }
+    }
+  ]);
+  const dynStats = aggr.length > 0 ? aggr[0] : { totalAssigned: 0, totalResolved: 0, activeComplaints: 0, avgTime: 0, avgSat: 0 };
+  
+  const officerObj = officer.toObject();
+  officerObj.stats = {
+    ...(officerObj.stats || {}),
+    totalAssigned: dynStats.totalAssigned,
+    totalResolved: dynStats.totalResolved,
+    avgResolutionHours: dynStats.avgTime ? Math.round(dynStats.avgTime * 10) / 10 : 0,
+    avgSatisfactionScore: dynStats.avgSat ? Math.round(dynStats.avgSat * 10) / 10 : 0,
+  };
+  officerObj.activeComplaints = dynStats.activeComplaints;
+
+  if (officer.role === 'department_head') {
+    const empAggr = await User.aggregate([
+      { $match: { role: 'employee', department: officer.department._id } },
+      { $group: {
+          _id: null,
+          bandwidth: { $sum: '$bandwidth' }
+        }
+      }
+    ]);
+    if (empAggr.length > 0) {
+      officerObj.bandwidth = empAggr[0].bandwidth;
+    } else {
+      officerObj.bandwidth = 0;
+    }
+  }
+
   // Get recent complaints
-  const recentComplaints = await Complaint.find({ assignedTo: officerId })
+  const recentComplaints = await Complaint.find(matchCondition)
     .sort('-createdAt')
     .limit(15)
     .populate('citizen', 'name');
@@ -429,7 +612,7 @@ exports.getOfficerAnalysis = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    officer,
+    officer: officerObj,
     recentComplaints,
     anomalies: officerAnomalies
   });

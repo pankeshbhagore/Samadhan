@@ -48,6 +48,7 @@ export default function EmployeeDashboard() {
   const critical = myStats.critical;
 
   const filtered = myComplaints.filter((c) => (activeTab === 'active' ? !['resolved', 'rejected'].includes(c.status) : c.status === 'resolved'));
+  const remindersCount = myComplaints.filter(c => c.adminReminder).length;
 
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><div className="spinner" /></div>;
 
@@ -57,6 +58,13 @@ export default function EmployeeDashboard() {
         <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--primary)' }}>👷 My Work Dashboard</h1>
         <p style={{ color: 'var(--text-muted)' }}>Welcome, {user?.name} — {user?.designation}</p>
       </div>
+
+      {user?.role === 'department_head' && remindersCount > 0 && (
+        <div className="alert" style={{ background: '#fff1f2', border: '1px solid #fecaca', color: '#be123c', padding: '16px 20px', borderRadius: 8, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12, fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(190, 18, 60, 0.1)' }} onClick={() => navigate('/complaints')}>
+          <AlertTriangle size={24} />
+          <span>URGENT: You have {remindersCount} {remindersCount === 1 ? 'complaint' : 'complaints'} flagged by the State Admin for immediate assignment! Click here to view.</span>
+        </div>
+      )}
 
       <div className="grid grid-4" style={{ marginBottom: 24 }}>
         <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/my-complaints')}><div className="stat-icon" style={{ background: '#eff6ff' }}><List size={22} color="var(--primary)" /></div><div><div className="stat-value" style={{ color: 'var(--primary)' }}>{total}</div><div className="stat-label">{user?.role === 'department_head' ? 'Department Total' : 'Total Assigned'}</div></div></div>
@@ -75,7 +83,7 @@ export default function EmployeeDashboard() {
                   <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '4px 0 0 0' }}>Your current active assignments versus bandwidth.</p>
                 </div>
                 <div style={{ padding: '6px 12px', background: 'var(--bg)', borderRadius: 20, fontSize: 12, fontWeight: 600 }}>
-                  {user?.activeComplaints || 0} / {user?.bandwidth || 10}
+                  {pending || 0} / {user?.bandwidth || 10}
                 </div>
               </div>
               <div style={{ height: 200 }}>
@@ -83,8 +91,8 @@ export default function EmployeeDashboard() {
                   <PieChart>
                     <Pie 
                       data={[
-                        { name: 'Active', value: user?.activeComplaints || 0 }, 
-                        { name: 'Free Capacity', value: Math.max(0, (user?.bandwidth || 10) - (user?.activeComplaints || 0)) }
+                        { name: 'Active', value: pending || 0 }, 
+                        { name: 'Free Capacity', value: Math.max(0, (user?.bandwidth || 10) - (pending || 0)) }
                       ]}
                       innerRadius={60} outerRadius={80} paddingAngle={2} dataKey="value" stroke="none"
                     >
@@ -126,12 +134,14 @@ export default function EmployeeDashboard() {
                 <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Complaints by Category</h3>
                 <div style={{ height: 260 }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={(deptStats.categoryCounts || []).map((c) => ({ name: formatCategory(c._id), count: c.count }))} layout="vertical" margin={{ left: 10 }}>
+                    <BarChart data={(deptStats.categoryCounts || []).map((c) => ({ name: formatCategory(c._id), Total: c.count, Resolved: c.resolved || 0 }))} layout="vertical" margin={{ left: 10 }}>
                       <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" />
                       <XAxis type="number" />
                       <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12 }} />
                       <Tooltip cursor={{ fill: 'var(--card-hover)' }} contentStyle={{ borderRadius: 8 }} />
-                      <Bar dataKey="count" fill="var(--primary)" radius={[0, 4, 4, 0]} barSize={20} />
+                      <Legend />
+                      <Bar dataKey="Total" fill="var(--primary)" radius={[0, 4, 4, 0]} barSize={12} />
+                      <Bar dataKey="Resolved" fill="var(--success)" radius={[0, 4, 4, 0]} barSize={12} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -155,7 +165,7 @@ export default function EmployeeDashboard() {
                             <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{off.designation}</div>
                           </div>
                           <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontWeight: 700, color: 'var(--success)' }}>{off.stats?.resolvedCount || 0} Resolved</div>
+                            <div style={{ fontWeight: 700, color: 'var(--success)' }}>{off.stats?.totalResolved || 0} Resolved</div>
                             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Avg: {off.stats?.avgResolutionHours ? Math.round(off.stats.avgResolutionHours) : '--'}h</div>
                           </div>
                         </div>

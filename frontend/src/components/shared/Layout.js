@@ -39,7 +39,7 @@ const NAV = {
     { to: '/users', label: 'User Management', icon: UserIcon },
   ],
   department_head: [
-    { to: '/my-complaints', label: 'My Dashboard', icon: LayoutDashboard },
+    { to: '/department-dashboard', label: 'Department Dashboard', icon: LayoutDashboard },
     { to: '/complaints', label: 'All Complaints', icon: FileText },
     { to: '/officers', label: 'Officers', icon: Users },
     { to: '/map', label: 'Grievance Map', icon: MapPin },

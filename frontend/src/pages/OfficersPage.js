@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getOfficerPerformance, getDepartments } from '../services/api';
-import { Trophy } from 'lucide-react';
+import { Trophy, MapPin, Building2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function OfficersPage() {
@@ -13,6 +13,13 @@ export default function OfficersPage() {
   const [filterDept, setFilterDept] = useState('');
   const [filterState, setFilterState] = useState('');
   const [sortBy, setSortBy] = useState('totalResolved');
+
+  const viewLevel = useMemo(() => {
+    if (user?.role === 'super_admin' && !filterState) return 'states';
+    if (user?.role === 'super_admin' && filterState && !filterDept) return 'departments';
+    if (user?.role === 'cm' && !filterDept) return 'departments';
+    return 'employees';
+  }, [user?.role, filterState, filterDept]);
 
   useEffect(() => {
     setLoading(true);
@@ -43,6 +50,27 @@ export default function OfficersPage() {
       return 0;
     });
 
+  const stateCards = useMemo(() => {
+    if (viewLevel !== 'states') return [];
+    const statsMap = {};
+    departments.forEach(d => {
+      if (!statsMap[d.state]) statsMap[d.state] = { total: 0, resolved: 0, depts: 0 };
+      statsMap[d.state].total += (d.stats?.totalComplaints || 0);
+      statsMap[d.state].resolved += (d.stats?.resolved || 0);
+      statsMap[d.state].depts += 1;
+    });
+    const stateConfig = require('../utils/statesConfig').default;
+    return Object.entries(statsMap).map(([code, stats]) => {
+      const sObj = stateConfig.find(s => s.code === code);
+      return { code, name: sObj ? sObj.name : code, ...stats };
+    }).sort((a,b) => b.resolved - a.resolved);
+  }, [viewLevel, departments]);
+
+  const deptCards = useMemo(() => {
+    if (viewLevel !== 'departments') return [];
+    return [...departments].sort((a,b) => (b.stats?.resolved || 0) - (a.stats?.resolved || 0));
+  }, [viewLevel, departments]);
+
   const getCapacityColor = (pct) => (pct >= 100 ? 'var(--danger)' : pct >= 70 ? 'var(--warning)' : 'var(--success)');
 
   if (loading && officers.length === 0) return <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><div className="spinner" /></div>;
@@ -54,50 +82,81 @@ export default function OfficersPage() {
         <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Track officer workload, performance, and integrity</p>
       </div>
 
-      {leaderboard.length > 0 && (
+      {viewLevel !== 'states' && (
+        <div style={{ marginBottom: 16 }}>
+          <button className="btn btn-outline btn-sm" onClick={() => {
+             if (viewLevel === 'employees' && user?.role === 'super_admin') {
+               setFilterDept('');
+             } else if (viewLevel === 'employees' && user?.role === 'cm') {
+               setFilterDept('');
+             } else if (viewLevel === 'departments' && user?.role === 'super_admin') {
+               setFilterState('');
+             }
+          }}>← Go Back</button>
+        </div>
+      )}
+
+      {viewLevel === 'employees' && (
         <div className="card" style={{ marginBottom: 16 }}>
-          <div className="card-header"><div className="card-title"><Trophy size={16} style={{ marginRight: 6, verticalAlign: -3, color: '#d97706' }} />Top Performers</div></div>
-          <div className="card-body" style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-            {leaderboard.map((o, i) => (
-              <div key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flex: '1 1 220px', background: 'var(--card-hover)', borderRadius: 10, padding: '10px 14px' }}>
-                <div className={`leaderboard-rank rank-${i + 1}`}>{i + 1}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.name}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{o.stats.totalResolved} resolved · {o.department}</div>
-                </div>
-              </div>
-            ))}
+          <div className="card-body" style={{ padding: '14px 20px', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <select className="form-control" style={{ flex: '1 1 180px' }} value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+              <option value="totalResolved">🏆 Top Performers (Most Resolved)</option>
+              <option value="falseClosures">⚠️ Sort by: False Closures</option>
+              <option value="capacity">Sort by: Workload</option>
+            </select>
           </div>
         </div>
       )}
 
-
-      <div className="card" style={{ marginBottom: 16 }}>
-        <div className="card-body" style={{ padding: '14px 20px', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          {user?.role === 'super_admin' && (
-            <select className="form-control" style={{ flex: '1 1 180px' }} value={filterState} onChange={(e) => setFilterState(e.target.value)}>
-              <option value="">All India (Global View)</option>
-              {require('../utils/statesConfig').default.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
-            </select>
-          )}
-          <select className="form-control" style={{ flex: '1 1 180px' }} value={filterDept} onChange={(e) => setFilterDept(e.target.value)}>
-            <option value="">All Departments</option>
-            {Array.from(new Map(departments.map(d => [d.name, d])).values()).map((d) => <option key={d._id} value={d._id}>{d.name}</option>)}
-          </select>
-          <select className="form-control" style={{ flex: '1 1 180px' }} value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option value="totalResolved">Sort by: Most Resolved</option>
-            <option value="falseClosures">Sort by: False Closures (⚠️)</option>
-            <option value="capacity">Sort by: Workload</option>
-          </select>
+      {viewLevel === 'states' && (
+        <div className="grid grid-3">
+          {stateCards.map((s, i) => (
+          <div key={s.code} className="card card-clickable" onClick={() => setFilterState(s.code)} style={{ position: 'relative', overflow: 'hidden' }}>
+            {i === 0 && <div style={{ position: 'absolute', top: 0, right: 0, background: '#d97706', color: 'white', padding: '4px 12px', borderBottomLeftRadius: 10, fontSize: 11, fontWeight: 700 }}>🏆 #1 STATE</div>}
+            <div className="card-body">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 10, background: i === 0 ? 'var(--warning)' : 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><MapPin size={22} color="white" /></div>
+                <div><div style={{ fontWeight: 700, fontSize: 16 }}>{s.name}</div><div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{s.depts} Departments</div></div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ background: 'var(--card-hover)', borderRadius: 8, padding: '10px 12px' }}><div style={{ fontSize: 18, fontWeight: 700, color: 'var(--primary)' }}>{s.total}</div><div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Total Assigned</div></div>
+                <div style={{ background: 'var(--card-hover)', borderRadius: 8, padding: '10px 12px' }}><div style={{ fontSize: 18, fontWeight: 700, color: 'var(--success)' }}>{s.resolved}</div><div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Total Resolved</div></div>
+              </div>
+            </div>
+          </div>
+        ))}
         </div>
-      </div>
+      )}
 
-      <div className="grid grid-3">
-        {filtered.map((o) => (
-          <div key={o.id} className="card card-clickable" onClick={() => navigate(`/officers/${o.id}`)}>
+      {viewLevel === 'departments' && (
+        <div className="grid grid-3">
+          {deptCards.map((d, i) => (
+          <div key={d._id} className="card card-clickable" onClick={() => setFilterDept(d._id)} style={{ position: 'relative', overflow: 'hidden' }}>
+            {i === 0 && <div style={{ position: 'absolute', top: 0, right: 0, background: '#059669', color: 'white', padding: '4px 12px', borderBottomLeftRadius: 10, fontSize: 11, fontWeight: 700 }}>🏆 #1 DEPARTMENT</div>}
+            <div className="card-body">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 10, background: i === 0 ? 'var(--success)' : 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Building2 size={22} color="white" /></div>
+                <div><div style={{ fontWeight: 700, fontSize: 16 }}>{d.name}</div><div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Code: {d.code}</div></div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ background: 'var(--card-hover)', borderRadius: 8, padding: '10px 12px' }}><div style={{ fontSize: 18, fontWeight: 700, color: 'var(--primary)' }}>{d.stats?.totalComplaints || 0}</div><div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Total Assigned</div></div>
+                <div style={{ background: 'var(--card-hover)', borderRadius: 8, padding: '10px 12px' }}><div style={{ fontSize: 18, fontWeight: 700, color: 'var(--success)' }}>{d.stats?.resolved || 0}</div><div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Total Resolved</div></div>
+              </div>
+            </div>
+          </div>
+          ))}
+        </div>
+      )}
+
+      {viewLevel === 'employees' && (() => {
+        const deptHead = filtered.find(o => o.role === 'department_head');
+        const regEmployees = filtered.filter(o => o.role !== 'department_head');
+        
+        const renderOfficerCard = (o) => (
+          <div key={o.id} className="card card-clickable" onClick={() => navigate(`/officers/${o.id}`)} style={o.role === 'department_head' ? { borderLeft: '4px solid var(--primary)' } : {}}>
             <div className="card-body">
               <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-                <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: 18, flexShrink: 0 }}>{o.name?.charAt(0)}</div>
+                <div style={{ width: 44, height: 44, borderRadius: '50%', background: o.role === 'department_head' ? 'var(--primary)' : 'var(--info)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: 18, flexShrink: 0 }}>{o.name?.charAt(0)}</div>
                 <div>
                   <div style={{ fontWeight: 700 }}>{o.name}</div>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{o.designation}</div>
@@ -105,16 +164,18 @@ export default function OfficersPage() {
                 </div>
               </div>
 
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Workload</span>
-                  <span style={{ fontWeight: 600, color: getCapacityColor(o.capacityPercent) }}>{o.capacityPercent}%</span>
+              {o.role === 'employee' && (
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Workload</span>
+                    <span style={{ fontWeight: 600, color: getCapacityColor(o.capacityPercent) }}>{o.capacityPercent}%</span>
+                  </div>
+                  <div style={{ height: 6, background: 'var(--card-hover)', borderRadius: 3 }}>
+                    <div style={{ height: '100%', borderRadius: 3, width: `${Math.min(100, o.capacityPercent)}%`, background: getCapacityColor(o.capacityPercent), transition: 'width 0.5s' }} />
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>{o.activeComplaints}/{o.bandwidth} active complaints</div>
                 </div>
-                <div style={{ height: 6, background: 'var(--card-hover)', borderRadius: 3 }}>
-                  <div style={{ height: '100%', borderRadius: 3, width: `${Math.min(100, o.capacityPercent)}%`, background: getCapacityColor(o.capacityPercent), transition: 'width 0.5s' }} />
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>{o.activeComplaints}/{o.bandwidth} active complaints</div>
-              </div>
+              )}
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
                 {[
@@ -138,8 +199,29 @@ export default function OfficersPage() {
               )}
             </div>
           </div>
-        ))}
-      </div>
+        );
+
+        return (
+          <div>
+            {deptHead && (
+              <div style={{ marginBottom: 24 }}>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>Department Head</h3>
+                <div className="grid grid-3">
+                  {renderOfficerCard(deptHead)}
+                </div>
+              </div>
+            )}
+            {regEmployees.length > 0 && (
+              <div>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>Department Officers ({regEmployees.length})</h3>
+                <div className="grid grid-3">
+                  {regEmployees.map(renderOfficerCard)}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {filtered.length === 0 && <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)' }}><div style={{ fontSize: 40, marginBottom: 12 }}>👥</div><div>No officers found</div></div>}
     </div>

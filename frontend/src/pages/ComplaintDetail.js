@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getComplaint, assignComplaint, updateComplaintStatus, citizenVerify, getOfficers } from '../services/api';
+import { getComplaint, assignComplaint, updateComplaintStatus, citizenVerify, getOfficers, remindDeptHead } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { getErrorMessage, formatStatus, formatCategory } from '../utils/helpers';
 import toast from 'react-hot-toast';
@@ -158,7 +158,8 @@ export default function ComplaintDetail() {
   const isOwner = (complaint.citizen?._id || complaint.citizen) === user?._id;
   const isAssigned = (complaint.assignedTo?._id || complaint.assignedTo) === user?._id;
   const canVerify = isCitizen() && isOwner && complaint.status === 'pending_verification';
-  const canAssign = isAdmin() || user?.role === 'department_head';
+  const canAssign = user?.role === 'department_head';
+  const canNotifyDeptHead = isAdmin() && !complaint.assignedTo && complaint.status !== 'resolved';
   const canUpdateStatus = isAssigned && isEmployee();
 
   const getValidNextStatuses = (current) => {
@@ -243,11 +244,21 @@ export default function ComplaintDetail() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontFamily: 'monospace', fontSize: 13, background: '#f1f5f9', padding: '3px 8px', borderRadius: 4 }}>{complaint.ticketId}</span>
+                <span style={{ fontFamily: 'monospace', fontSize: 13, background: complaint.adminReminder ? '#ffe4e6' : '#f1f5f9', color: complaint.adminReminder ? '#be123c' : 'inherit', padding: '3px 8px', borderRadius: 4 }}>{complaint.ticketId}</span>
                 <span className={`badge badge-${complaint.status}`}>{formatStatus(complaint.status)}</span>
                 <span className="badge" style={{ background: ps.bg, color: ps.color }}>{complaint.isCritical && '🚨 '}{complaint.priority?.toUpperCase()}</span>
                 {complaint.isDuplicate && <span className="badge" style={{ background: '#fef3c7', color: '#92400e' }}>Duplicate</span>}
               </div>
+              
+              {complaint.adminReminder && (
+                <div className="alert" style={{ background: '#fff1f2', border: '1px solid #fecaca', color: '#be123c', padding: '8px 12px', borderRadius: 8, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600 }}>
+                  <AlertTriangle size={16} /> 
+                  {user?.role === 'super_admin' || user?.role === 'cm' || user?.role === 'state_admin' 
+                    ? "URGENT: An administrative reminder has been issued to the Department Head to assign an officer immediately."
+                    : "URGENT: Administrator has sent a reminder to assign an officer to this complaint immediately."}
+                </div>
+              )}
+
               <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--primary)', marginBottom: 8 }}>{complaint.title}</h1>
               <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>{complaint.description}</p>
               {complaint.criticalReason && (
@@ -257,6 +268,17 @@ export default function ComplaintDetail() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
               {canAssign && complaint.status !== 'resolved' && (
                 <button className="btn btn-primary btn-sm" onClick={() => setShowAssign(true)}><User size={14} /> {complaint.assignedTo ? 'Reassign' : 'Assign Officer'}</button>
+              )}
+              {canNotifyDeptHead && (
+                <button className="btn btn-warning btn-sm" onClick={async () => {
+                  try {
+                    await remindDeptHead(id);
+                    toast.success('Department Head notified successfully');
+                    refreshComplaint();
+                  } catch (err) {
+                    toast.error('Failed to notify Department Head');
+                  }
+                }}><AlertTriangle size={14} /> Remind Dept Head</button>
               )}
               {canVerify && <button className="btn btn-success btn-sm" onClick={() => setShowVerify(true)}><CheckCircle size={14} /> Verify Resolution</button>}
               <button className="btn btn-outline btn-sm" onClick={handleShare}><Share2 size={14} /> Share Tracking Link</button>

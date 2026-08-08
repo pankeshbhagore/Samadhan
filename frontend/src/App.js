@@ -33,6 +33,7 @@ import NotFound from './pages/NotFound';
 import TrackComplaint from './pages/TrackComplaint';
 import CommandPalette from './components/shared/CommandPalette';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
+import DepartmentDashboard from './pages/DepartmentDashboard';
 
 const PrivateRoute = ({ children, roles }) => {
   const { user, loading } = useAuth();
@@ -46,7 +47,8 @@ const RoleRouter = () => {
   const { user } = useAuth();
   if (user?.role === 'super_admin') return <Navigate to="/super-admin-dashboard" replace />;
   if (user?.role === 'cm') return <Navigate to="/cm-dashboard" replace />;
-  if (['employee', 'department_head'].includes(user?.role)) return <Navigate to="/my-complaints" replace />;
+  if (user?.role === 'department_head') return <Navigate to="/department-dashboard" replace />;
+  if (user?.role === 'employee') return <Navigate to="/my-complaints" replace />;
   return <Navigate to="/dashboard" replace />;
 };
 
@@ -63,6 +65,7 @@ function AppRoutes() {
         <Route path="dashboard" element={<PrivateRoute roles={['citizen']}><Dashboard /></PrivateRoute>} />
         <Route path="cm-dashboard" element={<PrivateRoute roles={['cm']}><CMDashboard /></PrivateRoute>} />
         <Route path="super-admin-dashboard" element={<PrivateRoute roles={['super_admin']}><SuperAdminDashboard /></PrivateRoute>} />
+        <Route path="department-dashboard" element={<PrivateRoute roles={['department_head']}><DepartmentDashboard /></PrivateRoute>} />
         <Route path="my-complaints" element={<PrivateRoute roles={['employee', 'department_head']}><EmployeeDashboard /></PrivateRoute>} />
         <Route path="complaints" element={<PrivateRoute><ComplaintsPage /></PrivateRoute>} />
         <Route path="complaints/new" element={<PrivateRoute roles={['citizen']}><SubmitComplaint /></PrivateRoute>} />

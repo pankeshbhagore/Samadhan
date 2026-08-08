@@ -14,12 +14,17 @@ const { detectOfficerAnomaly } = require('./aiClassification');
  * Scan all active officers for behavioral anomalies.
  * Returns an array of { officer, anomalies } objects.
  */
-async function scanOfficerAnomalies(stateFilter) {
+async function scanOfficerAnomalies(filter) {
   const query = {
     role: { $in: ['employee', 'department_head'] },
     isActive: true,
   };
-  if (stateFilter) query.state = stateFilter;
+  if (filter && typeof filter === 'string') {
+    query.state = filter;
+  } else if (filter && typeof filter === 'object') {
+    if (filter.state) query.state = filter.state;
+    if (filter.department) query.department = filter.department;
+  }
 
   const officers = await User.find(query).select('-password').lean();
 
@@ -107,9 +112,14 @@ async function detectSpamComplaints(citizenId, hours = 24) {
  * Scan for departments that are accumulating too many "pending_verification"
  * or "assigned" complaints compared to their historical average.
  */
-async function detectDepartmentBottlenecks(stateFilter) {
+async function detectDepartmentBottlenecks(filter) {
   const query = {};
-  if (stateFilter) query.state = stateFilter;
+  if (filter && typeof filter === 'string') {
+    query.state = filter;
+  } else if (filter && typeof filter === 'object') {
+    if (filter.state) query.state = filter.state;
+    if (filter.department) query._id = filter.department;
+  }
 
   const departmentIds = (await Department.find(query).select('_id').lean()).map(d => d._id);
 

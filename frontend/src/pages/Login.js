@@ -23,7 +23,8 @@ export default function Login() {
       toast.success(`Welcome, ${user.name}!`);
       if (user.role === 'super_admin') navigate('/super-admin-dashboard');
       else if (user.role === 'cm') navigate('/cm-dashboard');
-      else if (['employee', 'department_head'].includes(user.role)) navigate('/my-complaints');
+      else if (user.role === 'department_head') navigate('/department-dashboard');
+      else if (user.role === 'employee') navigate('/my-complaints');
       else navigate('/dashboard');
     } catch (err) {
       toast.error(getErrorMessage(err, 'Login failed'));

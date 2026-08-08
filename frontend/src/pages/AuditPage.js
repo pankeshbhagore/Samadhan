@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getAuditLogs } from '../services/api';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import { ShieldAlert, AlertTriangle, Filter } from 'lucide-react';
 
 const ACTION_LABELS = {
@@ -12,6 +13,7 @@ const ACTION_LABELS = {
 };
 
 export default function AuditPage() {
+  const navigate = useNavigate();
   const [logs, setLogs] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -66,7 +68,17 @@ export default function AuditPage() {
                 {logs.map((log) => {
                   const meta = ACTION_LABELS[log.action] || { label: log.action, icon: '📌', color: 'var(--text)' };
                   return (
-                    <tr key={log._id} style={{ background: log.suspicious ? '#fff5f5' : undefined }}>
+                    <tr 
+                      key={log._id} 
+                      style={{ background: log.suspicious ? '#fff5f5' : undefined, cursor: log.entityId ? 'pointer' : 'default' }}
+                      className={log.entityId ? "hover-bg" : ""}
+                      onClick={() => {
+                        if (log.entityId) {
+                          if (log.entityType === 'Complaint') navigate(`/complaints/${log.entityId}`);
+                          else if (log.entityType === 'User') navigate(`/officers/${log.entityId}`);
+                        }
+                      }}
+                    >
                       <td style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{format(new Date(log.createdAt), 'dd MMM HH:mm')}</td>
                       <td><span style={{ color: meta.color, fontWeight: 600, fontSize: 12 }}>{meta.icon} {meta.label}</span></td>
                       <td><div style={{ fontSize: 13 }}>{log.performedBy?.name || 'System'}</div><div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{log.performedBy?.role?.replace('_', ' ')}</div></td>

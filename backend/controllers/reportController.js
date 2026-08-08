@@ -30,6 +30,9 @@ exports.generatePressRelease = asyncHandler(async (req, res) => {
 
   const { getStateFilter } = require('../middleware/stateFilter');
   const stateFilter = getStateFilter(req.user);
+  if (req.user.role === 'department_head' && req.user.department) {
+    stateFilter.department = req.user.department;
+  }
 
   const resolvedComplaints = await Complaint.find({
     status: 'resolved',
@@ -54,13 +57,31 @@ exports.generatePressRelease = asyncHandler(async (req, res) => {
     officer: c.assignedTo?.name || 'Unknown'
   }));
 
+  let officeName = "State Admin's Office";
+  let authorityName = "the government's";
+  
+  if (req.user.role === 'cm') {
+    officeName = "Chief Minister's Office";
+    authorityName = "the Chief Minister's";
+  } else if (req.user.role === 'super_admin') {
+    officeName = "National Administration Office";
+    authorityName = "the Central Government's";
+  } else if (req.user.role === 'department_head') {
+    officeName = "Department Head's Office";
+    authorityName = "the department's";
+  }
+
   const prompt = `
-    You are an expert Public Relations officer for the State Admin's Office. 
-    Write a professional, positive, and inspiring weekly press release summarizing the government's 
+    You are an expert Public Relations officer for the ${officeName}. 
+    Write a highly professional, polished, and inspiring weekly press release summarizing ${authorityName} 
     efforts in resolving citizen grievances over the last 7 days.
 
-    Highlight the fastest resolutions, the critical issues solved, and praise the specific departments 
-    and officers involved. Keep it around 300 words. Format it in Markdown.
+    CRITICAL INSTRUCTIONS:
+    1. DO NOT include any placeholders like "[Insert Date]", "[Name]", or "Date: XYZ". Write it as a final, ready-to-publish document.
+    2. Read the raw data provided below. Group the achievements by department.
+    3. Elegantly highlight 1-2 major successes (e.g. fastest resolutions, critical issues solved). 
+    4. Mention 1 or 2 top-performing officers by name, but do NOT just dump a list of all officers.
+    5. Format the output in clean Markdown. Use bolding and headers for visual appeal, but avoid excessive markdown characters. Keep it under 250 words.
 
     Here is the raw data of resolved complaints:
     ${JSON.stringify(summaryData, null, 2)}
@@ -71,7 +92,7 @@ exports.generatePressRelease = asyncHandler(async (req, res) => {
     const response = await aiClient.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
-      { role: 'system', content: `You are an expert PR writer for the State Admin of ${stateName}.` },
+      { role: 'system', content: `You are an expert PR writer for the ${officeName} of ${stateName}.` },
       { role: 'user', content: prompt }
     ],
       temperature: 0.7,

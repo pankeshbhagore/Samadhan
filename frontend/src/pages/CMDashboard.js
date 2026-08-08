@@ -7,6 +7,7 @@ import statesConfig, { getStateName } from '../utils/statesConfig';
 import { useAuth } from '../contexts/AuthContext';
 import { SkeletonStatsGrid } from '../components/shared/Skeletons';
 import { AlertTriangle, FileText, CheckCircle, X, Download } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
@@ -344,8 +345,8 @@ export default function CMDashboard() {
               <div className="modal-title">AI Generated Press Release</div>
               <button className="btn btn-icon" onClick={() => setPrReport(null)}><X size={20} /></button>
             </div>
-            <div className="modal-body" style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6, maxHeight: '60vh', overflowY: 'auto' }}>
-              {prReport}
+            <div className="modal-body markdown-body" style={{ lineHeight: 1.6, maxHeight: '60vh', overflowY: 'auto' }}>
+              <ReactMarkdown>{prReport}</ReactMarkdown>
             </div>
             <div className="modal-footer">
               <button className="btn btn-primary" onClick={() => { navigator.clipboard.writeText(prReport); toast.success('Copied to clipboard!'); }}>Copy Markdown</button>

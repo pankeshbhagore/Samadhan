@@ -99,6 +99,8 @@ const complaintSchema = new mongoose.Schema({
   upvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   upvoteCount: { type: Number, default: 0 },
 
+  adminReminder: { type: Boolean, default: false },
+
   cmVisit: { type: mongoose.Schema.Types.ObjectId, ref: 'CMVisit' }
 }, { timestamps: true });
 
