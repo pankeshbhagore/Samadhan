@@ -216,12 +216,12 @@ export default function Layout() {
 
       <div className="main-content">
         <header className="header">
-          <button className="btn btn-icon mob-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)} id="mob-menu">
+          <button className="btn btn-icon" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: 'none' }} id="mob-menu">
             <Menu size={20} />
           </button>
           <div style={{ flex: 1 }} />
 
-          <button className="kbd-chip hide-on-mobile" onClick={openCommandPalette} id="quick-search-chip" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button className="kbd-chip" onClick={openCommandPalette} id="quick-search-chip" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Command size={12} /> Quick search <span className="cmdk-kbd">{isMac ? '⌘' : 'Ctrl'} K</span>
           </button>
 
@@ -229,12 +229,12 @@ export default function Layout() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--badge-critical-bg)', border: '1px solid var(--badge-critical-border)', padding: '6px 12px', borderRadius: 8, cursor: 'pointer' }}
               onClick={() => navigate('/complaints?priority=critical')}>
               <AlertTriangle size={14} color="var(--badge-critical-fg)" />
-              <span className="hide-on-mobile" style={{ fontSize: 12, fontWeight: 600, color: 'var(--badge-critical-fg)' }}>{criticalAlerts.length} Critical</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--badge-critical-fg)' }}>{criticalAlerts.length} Critical</span>
             </div>
           )}
 
           {user?.state && (
-            <div className="kbd-chip hide-on-mobile" style={{ background: 'var(--primary)', color: 'white', border: 'none' }}>
+            <div className="kbd-chip" style={{ background: 'var(--primary)', color: 'white', border: 'none' }}>
               📍 {getStateName(user.state)}
             </div>
           )}
@@ -248,11 +248,11 @@ export default function Layout() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--card-hover)', padding: '6px 14px', borderRadius: 12, border: '1px solid var(--border)', cursor: 'pointer', transition: 'all 0.2s ease' }}
             onClick={() => navigate('/profile')} id="profile-chip" className="hover-bg">
             <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 12, fontWeight: 700 }}>
-              {user?.name?.charAt(0) || 'U'}
+              {user?.name?.charAt(0)}
             </div>
-            <div className="hide-on-mobile">
+            <div className="profile-chip-text">
               <div style={{ fontSize: 13, fontWeight: 600 }}>{user?.name}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{user?.role?.replace('_', ' ')}</div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{user?.role?.replace('_', ' ')}</div>
             </div>
           </div>
         </header>
